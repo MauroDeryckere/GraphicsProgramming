@@ -60,7 +60,7 @@ namespace dae
 		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) override
 		{
 			//todo: W3
-			throw std::runtime_error("Not Implemented Yet");
+			//throw std::runtime_error("Not Implemented Yet");
 			return {};
 		}
 
@@ -85,7 +85,7 @@ namespace dae
 		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) override
 		{
 			//todo: W3
-			throw std::runtime_error("Not Implemented Yet");
+			//throw std::runtime_error("Not Implemented Yet");
 			return {};
 		}
 
@@ -110,7 +110,7 @@ namespace dae
 		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) override
 		{
 			//todo: W3
-			throw std::runtime_error("Not Implemented Yet");
+			//throw std::runtime_error("Not Implemented Yet");
 			return {};
 		}
 

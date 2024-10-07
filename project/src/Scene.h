@@ -35,15 +35,15 @@ namespace dae
 
 		Camera& GetCamera() { return m_Camera; }
 		void GetClosestHit(const Ray& ray, HitRecord& closestHit) const;
-		bool DoesHit(const Ray& ray) const;
+		[[nodiscard]] bool DoesHit(const Ray& ray) const;
 
-		const std::vector<Plane>& GetPlaneGeometries() const { return m_PlaneGeometries; }
-		const std::vector<Sphere>& GetSphereGeometries() const { return m_SphereGeometries; }
-		const std::vector<Light>& GetLights() const { return m_Lights; }
-		const std::vector<Material*> GetMaterials() const { return m_Materials; }
+		std::vector<Plane> const& GetPlaneGeometries() const { return m_PlaneGeometries; }
+		std::vector<Sphere>const& GetSphereGeometries() const { return m_SphereGeometries; }
+		std::vector<Light> const& GetLights() const { return m_Lights; }
+		std::vector<Material*> const& GetMaterials() const { return m_Materials; }
 
 	protected:
-		std::string	sceneName;
+		std::string m_SceneName;
 
 		std::vector<Plane> m_PlaneGeometries{};
 		std::vector<Sphere> m_SphereGeometries{};
@@ -53,17 +53,15 @@ namespace dae
 
 		Camera m_Camera{};
 
-		Sphere* AddSphere(const Vector3& origin, float radius, unsigned char materialIndex = 0);
-		Plane* AddPlane(const Vector3& origin, const Vector3& normal, unsigned char materialIndex = 0);
+		Sphere* AddSphere(Vector3 const& origin, float radius, unsigned char materialIndex = 0);
+		Plane* AddPlane(Vector3 const& origin, Vector3 const& normal, unsigned char materialIndex = 0);
 		TriangleMesh* AddTriangleMesh(TriangleCullMode cullMode, unsigned char materialIndex = 0);
 
-		Light* AddPointLight(const Vector3& origin, float intensity, const ColorRGB& color);
-		Light* AddDirectionalLight(const Vector3& direction, float intensity, const ColorRGB& color);
+		Light* AddPointLight(Vector3 const& origin, float intensity, ColorRGB const& color);
+		Light* AddDirectionalLight(Vector3 const& direction, float intensity, ColorRGB const& color);
 		unsigned char AddMaterial(Material* pMaterial);
 	};
 
-	//+++++++++++++++++++++++++++++++++++++++++
-	//WEEK 1 Test Scene
 	class Scene_W1 final : public Scene
 	{
 	public:
@@ -88,6 +86,20 @@ namespace dae
 		Scene_W2(Scene_W2&&) noexcept = delete;
 		Scene_W2& operator=(const Scene_W2&) = delete;
 		Scene_W2& operator=(Scene_W2&&) noexcept = delete;
+
+		void Initialize() override;
+	};
+
+	class Scene_W3 final : public Scene
+	{
+	public:
+		Scene_W3() = default;
+		~Scene_W3() override = default;
+
+		Scene_W3(const Scene_W3&) = delete;
+		Scene_W3(Scene_W3&&) noexcept = delete;
+		Scene_W3& operator=(const Scene_W3&) = delete;
+		Scene_W3& operator=(Scene_W3&&) noexcept = delete;
 
 		void Initialize() override;
 	};
