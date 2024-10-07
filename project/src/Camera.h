@@ -22,8 +22,8 @@ namespace dae
 
 		Matrix cameraToWorld{  };
 
-		float movementSpeed{ 1.f };
-		float rotationSpeed{ 1.f };
+		float movementSpeed{ 3.f };
+		float rotationSpeed{ 10.f };
 
 		Camera() = default;
 

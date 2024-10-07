@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <vector>
 
 struct SDL_Window;
 struct SDL_Surface;
@@ -31,5 +32,8 @@ namespace dae
 
 		int m_Width{};
 		int m_Height{};
+
+		//Has to be updated when window is resized (not possible at the moment)
+		std::vector<int> m_Pixels{};
 	};
 }

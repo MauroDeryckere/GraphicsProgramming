@@ -10,7 +10,8 @@
 #include "Scene.h"
 #include "Utils.h"
 
-#include <iostream>
+#include <algorithm>
+#include <execution>
 
 using namespace dae;
 
@@ -21,6 +22,9 @@ Renderer::Renderer(SDL_Window * pWindow) :
 	//Initialize
 	SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
 	m_pBufferPixels = static_cast<uint32_t*>(m_pBuffer->pixels);
+
+	m_Pixels.resize(m_Width * m_Height);
+	std::iota(m_Pixels.begin(), m_Pixels.end(), 0);
 }
 
 void Renderer::Render(Scene* pScene) const
@@ -34,50 +38,50 @@ void Renderer::Render(Scene* pScene) const
 
 	Matrix const cameraToWorld{ camera.CalculateCameraToWorld() };
 
-	for (int px{0}; px < m_Width; ++px)
+	std::for_each(std::execution::par_unseq, m_Pixels.begin(), m_Pixels.end(), [&](int const idx)
 	{
-		float const x{ ( 2 * (px + .5f) / m_Width - 1) * aspectRatio * fov };
-		
-		for (int py{0}; py < m_Height; ++py)
+		int const px{ idx % m_Width };
+		int const py{ idx / m_Width };
+
+		float const x{ (2 * (px + .5f) / static_cast<float>(m_Width) - 1) * aspectRatio * fov };
+		float const y{ (1 - 2 * (py + .5f) / static_cast<float>(m_Height)) * fov };
+
+		Vector3 const dirViewSpace{ x , y, 1.f };
+		Vector3 const dirWorldSpace{ (cameraToWorld.TransformVector(dirViewSpace)).Normalized() };
+
+		Ray const viewRay{ cameraToWorld.GetTranslation() , dirWorldSpace };
+
+		HitRecord closestHit{ };
+		pScene->GetClosestHit(viewRay, closestHit);
+
+		ColorRGB finalColor{ };
+
+		if (closestHit.didHit)
 		{
-			float const y{ (1 - 2 * (py + .5f) / m_Height) * fov };
+			finalColor = materials[closestHit.materialIndex]->Shade();
 
-			Vector3 const dirViewSpace{ x , y, 1.f};
-			Vector3 const dirWorldSpace{ (cameraToWorld.TransformVector(dirViewSpace)).Normalized() };
-
-			Ray const viewRay{ cameraToWorld.GetTranslation() , dirWorldSpace };
-			
-			HitRecord closestHit{ };
-			pScene->GetClosestHit(viewRay, closestHit);
-
-			ColorRGB finalColor{ };
-
-			if (closestHit.didHit)
+			for (auto const& light : lights)
 			{
-				finalColor = materials[closestHit.materialIndex]->Shade();
+				auto dirToLight{ LightUtils::GetDirectionToLight(light, closestHit.origin) };
+				auto const distance{ dirToLight.Normalize() };
 
-				for (auto const& light : lights)
+				Ray const shadowRay{ closestHit.origin, dirToLight, 0.0001f, distance };
+
+				if (pScene->DoesHit(shadowRay))
 				{
-					auto dirToLight{ LightUtils::GetDirectionToLight(light, closestHit.origin) };
-					auto const distance{ dirToLight.Normalize() };
-
-					Ray const shadowRay{ closestHit.origin, dirToLight, 0.0001f, distance };
-
-					if (pScene->DoesHit(shadowRay))
-					{
-						finalColor *= .5f;
-					}
+					finalColor *= .5f;
 				}
 			}
-
-			finalColor.MaxToOne();
-
-			m_pBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBuffer->format,
-				static_cast<uint8_t>(finalColor.r * 255),
-				static_cast<uint8_t>(finalColor.g * 255),
-				static_cast<uint8_t>(finalColor.b * 255));
 		}
-	}
+
+		finalColor.MaxToOne();
+
+		m_pBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBuffer->format,
+			static_cast<uint8_t>(finalColor.r * 255),
+			static_cast<uint8_t>(finalColor.g * 255),
+			static_cast<uint8_t>(finalColor.b * 255));
+			
+	});
 
 	//@END
 	//Update SDL Surface
