@@ -34,9 +34,7 @@ namespace dae
 	class Material_SolidColor final : public Material
 	{
 	public:
-		Material_SolidColor(const ColorRGB& color) : m_Color(color)
-		{
-		}
+		Material_SolidColor(const ColorRGB& color) : m_Color(color){ }
 
 		ColorRGB Shade(const HitRecord& hitRecord, const Vector3& l, const Vector3& v) override
 		{

@@ -47,7 +47,7 @@ namespace dae
 
 			hitRecord.t = t;
 
-			hitRecord.normal = -ray.direction;
+			hitRecord.normal = (hitRecord.origin - sphere.origin).Normalized();
 
 			return true;
 		}
@@ -81,7 +81,7 @@ namespace dae
 			hitRecord.origin = p;
 			
 			hitRecord.t = t;
-			hitRecord.normal = -ray.direction;
+			hitRecord.normal = plane.normal;
 
 			return true;
 		}

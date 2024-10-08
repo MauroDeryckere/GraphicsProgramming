@@ -58,18 +58,42 @@ void Renderer::Render(Scene* pScene) const
 
 		if (closestHit.didHit)
 		{
-			finalColor = materials[closestHit.materialIndex]->Shade();
-
 			for (auto const& light : lights)
 			{
 				auto dirToLight{ LightUtils::GetDirectionToLight(light, closestHit.origin) };
 				auto const distance{ dirToLight.Normalize() };
 
 				Ray const shadowRay{ closestHit.origin, dirToLight, 0.0001f, distance };
-
-				if (pScene->DoesHit(shadowRay))
+				if (pScene->DoesHit(shadowRay) && m_ShadowsEnabled)
 				{
-					finalColor *= .5f;
+					continue;
+				}
+
+				switch(m_CurrLightMode)
+				{
+				case LightMode::ObservedArea:
+				{
+					auto const observedArea{ Vector3::Dot(dirToLight, closestHit.normal) };
+					if (observedArea >= 0.f)
+					{
+						finalColor += { observedArea, observedArea, observedArea };
+					}
+					break;
+				}
+				case LightMode::Radiance:
+				{
+					break;
+				}
+				case LightMode::BRDF:
+				{
+					break;
+				}
+				case LightMode::Combined:
+				{
+					break;
+				}
+				default:
+					break;
 				}
 			}
 		}

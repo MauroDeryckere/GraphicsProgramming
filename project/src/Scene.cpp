@@ -219,7 +219,7 @@ namespace dae {
 		auto const matLambertGrayBlue{ AddMaterial(new Material_Lambert{{.49f, .57f, .57f}, 1.f}) };
 
 		//Planes
-		AddPlane({ 0.f, 0.f, 10.f }, { 0.f, 0.f,0.f }, matLambertGrayBlue);
+		AddPlane({ 0.f, 0.f, 10.f }, { 0.f, 0.f,-1.f }, matLambertGrayBlue);
 		AddPlane({ 0.f, 0.f, 0.f }, { 0.f, 1.f,0.f }, matLambertGrayBlue);
 		AddPlane({ 0.f, 10.f, 0.f }, { 0.f, -1.f,0.f }, matLambertGrayBlue);
 		AddPlane({ 5.f, 0.f, 0.f }, { -1.f, 0.f,0.f }, matLambertGrayBlue);
