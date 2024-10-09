@@ -3,6 +3,8 @@
 #include "DataTypes.h"
 #include "BRDFs.h"
 
+#include <cassert>
+
 namespace dae
 {
 #pragma region Material BASE
@@ -53,13 +55,14 @@ namespace dae
 	{
 	public:
 		Material_Lambert(const ColorRGB& diffuseColor, float diffuseReflectance) :
-			m_DiffuseColor(diffuseColor), m_DiffuseReflectance(diffuseReflectance) {}
+			m_DiffuseColor(diffuseColor), m_DiffuseReflectance(diffuseReflectance)
+		{
+			assert(diffuseReflectance <= 1.f && diffuseReflectance >= 0.f);
+		}
 
 		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) override
 		{
-			//todo: W3
-			//throw std::runtime_error("Not Implemented Yet");
-			return {};
+			return BRDF::Lambert(m_DiffuseReflectance, m_DiffuseColor);
 		}
 
 	private:
@@ -82,9 +85,8 @@ namespace dae
 
 		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) override
 		{
-			//todo: W3
-			//throw std::runtime_error("Not Implemented Yet");
-			return {};
+			return BRDF::Lambert(m_DiffuseReflectance, m_DiffuseColor)
+				 + BRDF::Phong(m_SpecularReflectance, m_PhongExponent, l, -v, hitRecord.normal);
 		}
 
 	private:

@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <iostream>
 
 struct SDL_Window;
 struct SDL_Surface;
@@ -30,6 +31,7 @@ namespace dae
 			++curr %= static_cast<uint8_t>(LightMode::COUNT);
 
 			m_CurrLightMode = static_cast<LightMode>(curr);
+			std::cout << int(curr) << "\n";
 		}
 
 		void ToggleShadows() noexcept { m_ShadowsEnabled = !m_ShadowsEnabled; }

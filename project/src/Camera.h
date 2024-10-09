@@ -95,7 +95,7 @@ namespace dae
 			}
 
 			totalYaw -= deltaX * rotationSpeed * deltaTime;
-			totalPitch -= deltaY * rotationSpeed * deltaTime;  //Invert pitch for natural mouse movement
+			totalPitch += deltaY * rotationSpeed * deltaTime;
 
 			auto const m{ Matrix::CreateRotation(TO_RADIANS * totalPitch, TO_RADIANS * totalYaw, 0.f) };
 

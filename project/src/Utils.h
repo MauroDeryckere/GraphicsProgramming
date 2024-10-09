@@ -1,4 +1,5 @@
 #pragma once
+#include <iostream>
 #include <fstream>
 #include "Maths.h"
 #include "DataTypes.h"
@@ -25,7 +26,7 @@ namespace dae
 
 			float t{ (-b - sqrt(d)) / 2 * a };
 
-			if (t < ray.min)
+			if (t > ray.max || t < ray.min)
 			{
 				t = (-b + sqrt(d)) / 2 * a;
 			}
@@ -128,14 +129,12 @@ namespace dae
 		//Direction from target to light
 		inline Vector3 GetDirectionToLight(const Light& light, const Vector3& origin)
 		{
-			//TODO
 			switch(light.type)
 			{
 			case LightType::Point:
 				return light.origin - origin;
-				break;
-			default:
-				throw std::runtime_error("Invalid type");
+			case LightType::Directional:
+				return {}; //todo
 			}
 
 			return {};
@@ -143,8 +142,37 @@ namespace dae
 
 		inline ColorRGB GetRadiance(const Light& light, const Vector3& target)
 		{
-			//todo W3
-			throw std::runtime_error("Not Implemented Yet");
+			switch (light.type)
+			{
+			case LightType::Point:
+				{
+					return light.color * light.intensity / (Vector3::Dot(light.origin - target, light.origin - target));
+				}
+
+			case LightType::Directional:
+				{
+					return light.color * light.intensity;
+				}
+			}
+
+			return {};
+		}
+
+		inline float GetObservedArea(const Light& light, const Vector3& dirToLight, const Vector3& normal) noexcept
+		{
+			switch (light.type)
+			{
+			case LightType::Point:
+			{
+				return Vector3::Dot(dirToLight, normal);
+			}
+
+			case LightType::Directional:
+			{
+				return {};
+			}
+			}
+
 			return {};
 		}
 	}

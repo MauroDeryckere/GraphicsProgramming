@@ -12,20 +12,16 @@ namespace dae
 		 */
 		static ColorRGB Lambert(float kd, const ColorRGB& cd)
 		{
-			//todo: W3
-			//throw std::runtime_error("Not Implemented Yet");
-			return {};
+			return cd * kd / PI;
 		}
 
 		static ColorRGB Lambert(const ColorRGB& kd, const ColorRGB& cd)
 		{
-			//todo: W3
-			//throw std::runtime_error("Not Implemented Yet");
-			return {};
+			return cd * kd / PI;
 		}
 
 		/**
-		 * \brief todo
+		 * \brief
 		 * \param ks Specular Reflection Coefficient
 		 * \param exp Phong Exponent
 		 * \param l Incoming (incident) Light Direction
@@ -35,10 +31,9 @@ namespace dae
 		 */
 		static ColorRGB Phong(float ks, float exp, const Vector3& l, const Vector3& v, const Vector3& n)
 		{
-			//todo: W3
-			//throw std::runtime_error("Not Implemented Yet");
-			return {};
-		}
+			auto const phong{ ks * std::pow(Vector3::Dot(Vector3::Reflect(n, l), v), exp) };
+			return {phong, phong, phong};
+		}	
 
 		/**
 		 * \brief BRDF Fresnel Function >> Schlick

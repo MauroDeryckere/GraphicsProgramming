@@ -11,6 +11,7 @@
 #include "Utils.h"
 
 #include <algorithm>
+#include <corecrt_io.h>
 #include <execution>
 
 using namespace dae;
@@ -64,6 +65,7 @@ void Renderer::Render(Scene* pScene) const
 				auto const distance{ dirToLight.Normalize() };
 
 				Ray const shadowRay{ closestHit.origin, dirToLight, 0.0001f, distance };
+
 				if (pScene->DoesHit(shadowRay) && m_ShadowsEnabled)
 				{
 					continue;
@@ -73,23 +75,39 @@ void Renderer::Render(Scene* pScene) const
 				{
 				case LightMode::ObservedArea:
 				{
-					auto const observedArea{ Vector3::Dot(dirToLight, closestHit.normal) };
-					if (observedArea >= 0.f)
+					auto const observedArea{ LightUtils::GetObservedArea(light, dirToLight, closestHit.normal) };
+					if (observedArea < 0.f)
 					{
-						finalColor += { observedArea, observedArea, observedArea };
+						continue;
 					}
+					finalColor += observedArea;
+
 					break;
 				}
 				case LightMode::Radiance:
 				{
+					auto const radiance{ LightUtils::GetRadiance(light, closestHit.origin) };
+					finalColor += radiance;
+
 					break;
 				}
 				case LightMode::BRDF:
 				{
+					finalColor += materials[closestHit.materialIndex]->Shade(closestHit, dirToLight, viewRay.direction);
+
 					break;
 				}
 				case LightMode::Combined:
 				{
+					auto const observedArea{ LightUtils::GetObservedArea(light, dirToLight, closestHit.normal) };
+					auto const radiance{ LightUtils::GetRadiance(light, closestHit.origin) };
+
+					if (observedArea < 0.f)
+					{
+						continue;
+					}
+					finalColor += radiance * materials[closestHit.materialIndex]->Shade(closestHit, dirToLight, viewRay.direction) * observedArea;
+
 					break;
 				}
 				default:

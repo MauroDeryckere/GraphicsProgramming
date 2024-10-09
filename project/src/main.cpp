@@ -50,6 +50,7 @@ int main(int argc, char* args[])
 	//auto const pScene { new Scene_W1() };
 	//auto const pScene{ new Scene_W2() };
 	auto const pScene{ new Scene_W3() };
+	//auto const pScene{ new Scene_W3_TestScene() };
 	pScene->Initialize();
 
 	//Start loop

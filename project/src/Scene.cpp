@@ -2,7 +2,8 @@
 #include "Utils.h"
 #include "Material.h"
 
-#include <iostream>
+#include <ranges>
+#include <algorithm>
 
 namespace dae {
 
@@ -238,5 +239,26 @@ namespace dae {
 		AddPointLight({ -2.5f, 5.f, -5.f }, 70.f, { 1.f, .80f, .45f });
 		AddPointLight({ 2.5f, 2.5f, -5.f }, 50.f, { .34f, .47f, .68f }); 
 	}
+
+	void Scene_W3_TestScene::Initialize()
+	{
+		m_Camera.origin = { 0.f, 1.f, -5.f };
+		m_Camera.fovAngle = 45.f;
+
+		unsigned char const matId_Red{ AddMaterial(new Material_Lambert{ colors::Red, 1.f }) };
+		unsigned char const matId_Blue{ AddMaterial(new Material_LambertPhong{ colors::Blue, 1.f, 1.f, 60.f }) };
+		unsigned char const matId_Yellow{ AddMaterial(new Material_Lambert{ colors::Yellow, 1.f }) };
+
+		//Spheres
+		AddSphere({ -.75f, 1.f, 0.f }, 1.f, matId_Red);
+		AddSphere({ .75f, 1.f, 0.f }, 1.f, matId_Blue);
+
+		AddPlane({ 0.f, 0.f, 0.f }, { 0.f, 1.f, 0.f }, matId_Yellow);
+
+		AddPointLight({ 0.f, 5.f, 5.f }, 25.f, colors::White);
+		AddPointLight({ 0.f, 2.5f, -5.f }, 25.f, colors::White);
+	}
+
+
 #pragma endregion
 }

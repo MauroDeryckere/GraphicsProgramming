@@ -16,6 +16,46 @@ namespace dae
 				*this /= maxValue;
 		}
 
+#pragma region ToneMapping
+		//https://graphics-programming.org/resources/tonemapping/index.html
+		void ReinhardToneMap()
+		{
+			
+		}
+
+		void ExtendedReinhardToneMap()
+		{
+			
+		}
+
+		void ReinhardLuminaceToneMap()
+		{
+			
+		}
+
+		void ReinhardJolieToneMap()
+		{
+			
+		}
+
+		void ACESToneMap()
+		{
+			
+		}
+
+		void ACESAproxToneMap()
+		{
+			float static constexpr a{ 2.51f };
+			float static constexpr b{ 0.03f };
+			float static constexpr c{ 2.43f };
+			float static constexpr d{ 0.59f };
+			float static constexpr e{ 0.14f };
+
+			(*this) *= 0.6f;
+			*this = ((*this) * (a * (*this) + b)) / ((*this) * (c * (*this) + d) + e);
+		}
+#pragma endregion
+
 		static ColorRGB Lerp(const ColorRGB& c1, const ColorRGB& c2, float factor)
 		{
 			return { Lerpf(c1.r, c2.r, factor), Lerpf(c1.g, c2.g, factor), Lerpf(c1.b, c2.b, factor) };
@@ -93,6 +133,20 @@ namespace dae
 			return *this /= c;
 		}
 
+		ColorRGB operator/(const ColorRGB& c) const
+		{
+			return {r/c.r, g/c.g, b/c.b};
+		}
+
+		const ColorRGB& operator+=(float s)
+		{
+			r += s;
+			g += s;
+			b += s;
+
+			return *this;
+		}
+
 		const ColorRGB& operator*=(float s)
 		{
 			r *= s;
@@ -112,6 +166,16 @@ namespace dae
 			return { r * s, g * s,b * s };
 		}
 
+		const ColorRGB& operator+(float s)
+		{
+			return *this += s;
+		}
+
+		ColorRGB operator+(float s) const
+		{
+			return { r + s, g + s, b + s };
+		}
+
 		const ColorRGB& operator/=(float s)
 		{
 			r /= s;
@@ -125,6 +189,8 @@ namespace dae
 		{
 			return *this /= s;
 		}
+
+		friend ColorRGB operator*(float s, const ColorRGB& color);
 		#pragma endregion
 	};
 
