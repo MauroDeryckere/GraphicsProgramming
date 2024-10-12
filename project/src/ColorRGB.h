@@ -20,27 +20,27 @@ namespace dae
 		//https://graphics-programming.org/resources/tonemapping/index.html
 		void ReinhardToneMap()
 		{
-			
+			throw std::exception{"not implemented yet"};
 		}
 
 		void ExtendedReinhardToneMap()
 		{
-			
+			throw std::exception{ "not implemented yet" };
 		}
 
 		void ReinhardLuminaceToneMap()
 		{
-			
+			throw std::exception{ "not implemented yet" };
 		}
 
 		void ReinhardJolieToneMap()
 		{
-			
+			throw std::exception{ "not implemented yet" };
 		}
 
 		void ACESToneMap()
 		{
-			
+			throw std::exception{ "not implemented yet" };
 		}
 
 		void ACESAproxToneMap()
@@ -53,6 +53,7 @@ namespace dae
 
 			(*this) *= 0.6f;
 			*this = ((*this) * (a * (*this) + b)) / ((*this) * (c * (*this) + d) + e);
+			throw std::exception{ "not implemented yet" };
 		}
 #pragma endregion
 
