@@ -212,10 +212,10 @@ namespace dae {
 
 		auto const matCT_GrayRoughMetal{ AddMaterial(new Material_CookTorrence{ {.972f, .960f, .915f}, 1.f, 1.f }) };
 		auto const matCT_GrayMediumMetal{ AddMaterial(new Material_CookTorrence{ {.972f, .960f, .915f}, 1.f, .6f }) };
-		auto const matCT_GraySmoothMetal{ AddMaterial(new Material_CookTorrence{ {.972f, .960f, .915f}, 1.f, 1.f }) };
+		auto const matCT_GraySmoothMetal{ AddMaterial(new Material_CookTorrence{ {.972f, .960f, .915f}, 1.f, .1f }) };
 		auto const matCT_GrayRoughPlastic{ AddMaterial(new Material_CookTorrence{ {.75f, .75f, .75f}, 0.f, 1.f }) };
 		auto const matCT_GrayMediumPlastic{ AddMaterial(new Material_CookTorrence{ {.75f, .75f, .75f}, 0.f, .6f }) };
-		auto const matCT_GraySmoothPlastic{ AddMaterial(new Material_CookTorrence{ {.75f, .75f, .75f}, 0.f, 1.f }) };
+		auto const matCT_GraySmoothPlastic{ AddMaterial(new Material_CookTorrence{ {.75f, .75f, .75f}, 0.f, .1f }) };
 
 		auto const matLambertGrayBlue{ AddMaterial(new Material_Lambert{{.49f, .57f, .57f}, 1.f}) };
 

@@ -190,7 +190,14 @@ namespace dae
 			return *this /= s;
 		}
 
+		const ColorRGB& operator/(float s) const
+		{
+			ColorRGB c{ *this };
+			return  c /= s;
+		}
+
 		friend ColorRGB operator*(float s, const ColorRGB& color);
+		friend ColorRGB operator-(float s, const ColorRGB& color);
 		#pragma endregion
 	};
 
@@ -198,6 +205,10 @@ namespace dae
 	inline ColorRGB operator*(float s, const ColorRGB& c)
 	{
 		return c * s;
+	}
+	inline ColorRGB operator-(float s, const ColorRGB& c)
+	{
+		return { s-c.r, s-c.g, s-c.b };
 	}
 
 	namespace colors

@@ -44,9 +44,7 @@ namespace dae
 		 */
 		static ColorRGB FresnelFunction_Schlick(const Vector3& h, const Vector3& v, const ColorRGB& f0)
 		{
-			//todo: W3
-			//throw std::runtime_error("Not Implemented Yet");
-			return {};
+			return f0 + (1.f - f0) * std::pow(1 - Vector3::Dot(h, v), 5);
 		}
 
 		/**
@@ -58,9 +56,9 @@ namespace dae
 		 */
 		static float NormalDistribution_GGX(const Vector3& n, const Vector3& h, float roughness)
 		{
-			//todo: W3
-			//throw std::runtime_error("Not Implemented Yet");
-			return {};
+			auto const a{ roughness * roughness };
+			auto const dot{ Vector3::Dot(n, h) };
+			return (a * a) / (PI * Square(dot * dot * (a * a - 1) + 1));
 		}
 
 
@@ -73,9 +71,10 @@ namespace dae
 		 */
 		static float GeometryFunction_SchlickGGX(const Vector3& n, const Vector3& v, float roughness)
 		{
-			//todo: W3
-			//throw std::runtime_error("Not Implemented Yet");
-			return {};
+			float const a{ roughness * roughness };
+			float const kDirect{ ((a + 1) * (a + 1)) / 8};
+			
+			return Vector3::Dot(n, v) / (Vector3::Dot(n, v) * (1 - kDirect) + kDirect);
 		}
 
 		/**
@@ -88,9 +87,7 @@ namespace dae
 		 */
 		static float GeometryFunction_Smith(const Vector3& n, const Vector3& v, const Vector3& l, float roughness)
 		{
-			//todo: W3
-			//throw std::runtime_error("Not Implemented Yet");
-			return {};
+			return GeometryFunction_SchlickGGX(n, v, roughness) * GeometryFunction_SchlickGGX(n, l, roughness);
 		}
 
 	}

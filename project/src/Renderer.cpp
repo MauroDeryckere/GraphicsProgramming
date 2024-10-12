@@ -93,7 +93,13 @@ void Renderer::Render(Scene* pScene) const
 				}
 				case LightMode::BRDF:
 				{
-					finalColor += materials[closestHit.materialIndex]->Shade(closestHit, dirToLight, viewRay.direction);
+					auto const observedArea{ LightUtils::GetObservedArea(light, dirToLight, closestHit.normal) };
+					if (observedArea < 0.f)
+					{
+						continue;
+					}
+
+					finalColor += materials[closestHit.materialIndex]->Shade(closestHit, dirToLight, -viewRay.direction);
 
 					break;
 				}
@@ -106,7 +112,8 @@ void Renderer::Render(Scene* pScene) const
 					{
 						continue;
 					}
-					finalColor += radiance * materials[closestHit.materialIndex]->Shade(closestHit, dirToLight, viewRay.direction) * observedArea;
+
+					finalColor += radiance * materials[closestHit.materialIndex]->Shade(closestHit, dirToLight, -viewRay.direction) * observedArea;
 
 					break;
 				}

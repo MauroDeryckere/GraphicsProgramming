@@ -86,7 +86,7 @@ namespace dae
 		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) override
 		{
 			return BRDF::Lambert(m_DiffuseReflectance, m_DiffuseColor)
-				 + BRDF::Phong(m_SpecularReflectance, m_PhongExponent, l, -v, hitRecord.normal);
+				 + BRDF::Phong(m_SpecularReflectance, m_PhongExponent, l, v, hitRecord.normal);
 		}
 
 	private:
@@ -105,13 +105,43 @@ namespace dae
 		Material_CookTorrence(const ColorRGB& albedo, float metalness, float roughness) :
 			m_Albedo(albedo), m_Metalness(metalness), m_Roughness(roughness)
 		{
+			assert(m_Metalness == 1.f || m_Metalness == 0.f);
+			assert(m_Roughness != 0.f);
 		}
 
 		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) override
 		{
-			//todo: W3
-			//throw std::runtime_error("Not Implemented Yet");
-			return {};
+			if (m_Roughness == 0.f)
+			{
+				return {};
+			}
+
+			ColorRGB const f0{ (m_Metalness == 0.f) ? ColorRGB{ 0.04f, 0.04f, 0.04f } : m_Albedo }; //specular color
+
+			Vector3 const h{ (v + l).Normalized() };
+
+			auto const F{ BRDF::FresnelFunction_Schlick(h, v, f0) };
+			auto const D{ BRDF::NormalDistribution_GGX(hitRecord.normal, h, m_Roughness) };
+			auto const G{ BRDF::GeometryFunction_Smith(hitRecord.normal, v, l, m_Roughness) };
+
+			float const dot1{ Vector3::Dot(v, hitRecord.normal) };
+			float const dot2{ Vector3::Dot(l, hitRecord.normal) };
+
+			//Not necesary with observed area check in renderer
+			//if (dot1 < 0.f)
+			//{
+			//	dot1 = 0.f;
+			//}
+			//if (dot2 < 0.f)
+			//{
+			//	dot2 = 0.f;
+			//}
+
+			auto const specular{ (D * F * G) / (4 * dot1 * dot2) };
+			auto const diffuse{ (m_Metalness == 0.f) ? BRDF::Lambert(ColorRGB{1.f,1.f,1.f} - F, m_Albedo)
+															 : BRDF::Lambert(0.f, m_Albedo) };
+
+			return diffuse + specular;
 		}
 
 	private:
