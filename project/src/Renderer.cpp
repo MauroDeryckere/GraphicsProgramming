@@ -64,9 +64,9 @@ void Renderer::Render(Scene* pScene) const
 				auto dirToLight{ LightUtils::GetDirectionToLight(light, closestHit.origin) };
 				auto const distance{ dirToLight.Normalize() };
 
-				Ray const shadowRay{ closestHit.origin, dirToLight, 0.0001f, distance };
+				Ray const shadowRay{ closestHit.origin, dirToLight, 0.001f, distance };
 
-				if (pScene->DoesHit(shadowRay) && m_ShadowsEnabled)
+				if (m_ShadowsEnabled && pScene->DoesHit(shadowRay))
 				{
 					continue;
 				}
@@ -106,13 +106,13 @@ void Renderer::Render(Scene* pScene) const
 				case LightMode::Combined:
 				{
 					auto const observedArea{ LightUtils::GetObservedArea(light, dirToLight, closestHit.normal) };
-					auto const radiance{ LightUtils::GetRadiance(light, closestHit.origin) };
 
 					if (observedArea < 0.f)
 					{
 						continue;
 					}
 
+					auto const radiance{ LightUtils::GetRadiance(light, closestHit.origin) };
 					finalColor += radiance * materials[closestHit.materialIndex]->Shade(closestHit, dirToLight, -viewRay.direction) * observedArea;
 
 					break;
@@ -122,6 +122,9 @@ void Renderer::Render(Scene* pScene) const
 				}
 			}
 		}
+
+		//ReinhardJolieToneMap(finalColor);
+		//ACESAproxToneMap(finalColor);
 
 		finalColor.MaxToOne();
 

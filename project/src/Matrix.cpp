@@ -154,9 +154,12 @@ namespace dae
 
 	Matrix Matrix::CreateScale(float sx, float sy, float sz)
 	{
-		//todo W2
-		throw std::runtime_error("Not Implemented Yet");
-		return {};
+		return {
+			{sx, 0, 0},
+			{0, sy, 0},
+			{0, 0, sz},
+               {0, 0, 0}
+		};
 	}
 
 	Matrix Matrix::CreateScale(const Vector3& s)
