@@ -9,6 +9,7 @@ struct SDL_Surface;
 
 namespace dae
 {
+	class Vector3;
 	class Scene;
 
 	class Renderer final
@@ -35,6 +36,17 @@ namespace dae
 
 		void ToggleShadows() noexcept { m_ShadowsEnabled = !m_ShadowsEnabled; }
 
+		void CycleSampleMode() noexcept
+		{
+			auto curr{ static_cast<uint8_t>(m_CurrLightMode) };
+			++curr %= static_cast<uint8_t>(LightMode::COUNT);
+
+			m_CurrLightMode = static_cast<LightMode>(curr);
+		}
+
+		void IncreaseSamples() noexcept { m_Samplecount *= 2; }
+		void DecreaseSamples() noexcept { m_Samplecount = std::max(m_Samplecount / 2, 1); }
+
 	private:
 		SDL_Window* m_pWindow{};
 
@@ -45,7 +57,7 @@ namespace dae
 		int m_Height{};
 
 		//Has to be updated when window is resized (not possible at the moment)
-		std::vector<int> m_Pixels{};
+		std::vector<uint32_t> m_Pixels{ };
 
 		enum class LightMode : uint8_t
 		{
@@ -54,9 +66,19 @@ namespace dae
 			BRDF, //Scattering of the light
 			Combined, //ObservedArea * Radiance * BRDF
 			COUNT
-		};
+		}; 
+		LightMode m_CurrLightMode{ LightMode::Combined }; //Cycle through with F3
+		bool m_ShadowsEnabled{ true }; //Switched on/off with F2
 
-		LightMode m_CurrLightMode{ LightMode::Combined };
-		bool m_ShadowsEnabled{ true };
+		enum class SampleMode : uint8_t
+		{
+			RandomSquare,
+			COUNT
+		};
+		SampleMode m_CurrSampleMode{ SampleMode::RandomSquare }; //Cycle through with F4
+		uint16_t m_Samplecount{ 1 }; //Decrease with F5, Increase with F6
+
+		Vector3 SampleSquare() const noexcept;
+		//Vector3 UniformSquare() const noexcept; //TODO
 	};
 }

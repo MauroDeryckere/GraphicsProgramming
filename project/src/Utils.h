@@ -4,6 +4,9 @@
 #include "Maths.h"
 #include "DataTypes.h"
 
+#include <random>
+#include <limits>
+
 namespace dae
 {
 	namespace GeometryUtils
@@ -363,5 +366,27 @@ namespace dae
 			return true;
 		}
 #pragma warning(pop)
+
+		template<typename T>
+		constexpr T Random(T min, T max) noexcept
+		requires (std::is_floating_point_v<T> || std::is_integral_v<T>)
+		{
+			if constexpr (std::is_floating_point_v<T>)
+			{
+				thread_local std::uniform_real_distribution<T> distribution(min, max);
+				thread_local std::mt19937 generator;
+
+				return distribution(generator);
+			}
+
+			else if constexpr (std::is_integral_v<T>)
+			{
+				thread_local std::uniform_int_distribution<T> distribution(min, max);
+				thread_local std::mt19937 generator;
+				return distribution(generator);
+			}
+
+			return std::numeric_limits<T>::min();
+		}
 	}
 }

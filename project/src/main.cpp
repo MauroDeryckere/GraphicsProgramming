@@ -16,6 +16,8 @@
 
 using namespace dae;
 
+void PrintInfo();
+
 void ShutDown(SDL_Window* pWindow)
 {
 	SDL_DestroyWindow(pWindow);
@@ -58,6 +60,8 @@ int main(int argc, char* args[])
 	auto const pScene{ new Scene_W4_ReferenceScene{} };
 	//auto const pScene{ new Scene_W4_BunnyScene{} };
 
+	PrintInfo();
+
 	pScene->Initialize();
 
 	//Start loop
@@ -93,6 +97,20 @@ int main(int argc, char* args[])
 				{
 					pRenderer->CycleLighMode();
 				}
+
+				if (e.key.keysym.scancode == SDL_SCANCODE_F4)
+				{
+					pRenderer->CycleSampleMode();
+				}
+				if (e.key.keysym.scancode == SDL_SCANCODE_F5)
+				{
+					pRenderer->DecreaseSamples();
+				}
+				if (e.key.keysym.scancode == SDL_SCANCODE_F6)
+				{
+					pRenderer->IncreaseSamples();
+				}
+
 				break;
 			}
 		}
@@ -130,4 +148,12 @@ int main(int argc, char* args[])
 
 	ShutDown(pWindow);
 	return 0;
+}
+
+void PrintInfo()
+{
+	std::cout << "Raytracer project Mauro Deryckere\n";
+	std::cout << "Keybinds: \n";
+	std::cout << "F1: Screenshot\nF2: Shadows on/off\nF3: Cycle light mode\nF4: Cycle sample mode\nF5: Decrease samples\nF6: Increase samples\n\n";
+	std::cout << "WASD: Move camera\nHold LMB and move: rotate camera\n\n";
 }

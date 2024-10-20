@@ -38,95 +38,101 @@ void Renderer::Render(Scene* pScene) const
 	float const fov{ tan(camera.fovAngle * TO_RADIANS/2) }; //TODO -calculate only when updating
 
 	Matrix const cameraToWorld{ camera.CalculateCameraToWorld() };
-
+	
 	std::for_each(std::execution::par_unseq, m_Pixels.begin(), m_Pixels.end(), [&](int const idx)
 	{
+		ColorRGB finalColor{ };
+
 		int const px{ idx % m_Width };
 		int const py{ idx / m_Width };
 
-		float const x{ (2 * (px + .5f) / static_cast<float>(m_Width) - 1) * aspectRatio * fov };
-		float const y{ (1 - 2 * (py + .5f) / static_cast<float>(m_Height)) * fov };
-
-		Vector3 const dirViewSpace{ x , y, 1.f };
-		Vector3 const dirWorldSpace{ (cameraToWorld.TransformVector(dirViewSpace)).Normalized() };
-
-		Ray const viewRay{ cameraToWorld.GetTranslation() , dirWorldSpace };
-
-		HitRecord closestHit{ };
-		pScene->GetClosestHit(viewRay, closestHit);
-
-		ColorRGB finalColor{ };
-
-		if (closestHit.didHit)
+		for (uint32_t currSample{ 0 }; currSample < m_Samplecount; ++currSample)
 		{
-			for (auto const& light : lights)
+			auto const offset{ SampleSquare() };
+
+			float const x{ ((2 * (px + .5f + offset.x) / static_cast<float>(m_Width) - 1) * aspectRatio * fov) };
+			float const y{ ((1 - 2 * (py + .5f + offset.y) / static_cast<float>(m_Height)) * fov) };
+
+			Vector3 const dirViewSpace{ x , y, 1.f };
+			Vector3 const dirWorldSpace{ (cameraToWorld.TransformVector(dirViewSpace)).Normalized() };
+
+			Ray const viewRay{ cameraToWorld.GetTranslation() , dirWorldSpace };
+
+			HitRecord closestHit{ };
+			pScene->GetClosestHit(viewRay, closestHit);
+
+			if (closestHit.didHit)
 			{
-				auto dirToLight{ LightUtils::GetDirectionToLight(light, closestHit.origin) };
-				auto const distance{ dirToLight.Normalize() };
-
-				Ray const shadowRay{ closestHit.origin, dirToLight, 0.001f, distance };
-
-				if (m_ShadowsEnabled && pScene->DoesHit(shadowRay))
+				for (auto const& light : lights)
 				{
-					continue;
-				}
+					auto dirToLight{ LightUtils::GetDirectionToLight(light, closestHit.origin) };
+					auto const distance{ dirToLight.Normalize() };
 
-				switch(m_CurrLightMode)
-				{
-				case LightMode::ObservedArea:
-				{
-					auto const observedArea{ LightUtils::GetObservedArea(light, dirToLight, closestHit.normal) };
-					if (observedArea < 0.f)
-					{
-						continue;
-					}
-					finalColor += observedArea;
+					Ray const shadowRay{ closestHit.origin, dirToLight, 0.001f, distance };
 
-					break;
-				}
-				case LightMode::Radiance:
-				{
-					auto const radiance{ LightUtils::GetRadiance(light, closestHit.origin) };
-					finalColor += radiance;
-
-					break;
-				}
-				case LightMode::BRDF:
-				{
-					auto const observedArea{ LightUtils::GetObservedArea(light, dirToLight, closestHit.normal) };
-					if (observedArea < 0.f)
+					if (m_ShadowsEnabled && pScene->DoesHit(shadowRay))
 					{
 						continue;
 					}
 
-					finalColor += materials[closestHit.materialIndex]->Shade(closestHit, dirToLight, -viewRay.direction);
-
-					break;
-				}
-				case LightMode::Combined:
-				{
-					auto const observedArea{ LightUtils::GetObservedArea(light, dirToLight, closestHit.normal) };
-
-					if (observedArea < 0.f)
+					switch (m_CurrLightMode)
 					{
-						continue;
+					case LightMode::ObservedArea:
+					{
+						auto const observedArea{ LightUtils::GetObservedArea(light, dirToLight, closestHit.normal) };
+						if (observedArea < 0.f)
+						{
+							continue;
+						}
+						finalColor += observedArea;
+
+						break;
 					}
+					case LightMode::Radiance:
+					{
+						auto const radiance{ LightUtils::GetRadiance(light, closestHit.origin) };
+						finalColor += radiance;
 
-					auto const radiance{ LightUtils::GetRadiance(light, closestHit.origin) };
-					finalColor += radiance * materials[closestHit.materialIndex]->Shade(closestHit, dirToLight, -viewRay.direction) * observedArea;
+						break;
+					}
+					case LightMode::BRDF:
+					{
+						auto const observedArea{ LightUtils::GetObservedArea(light, dirToLight, closestHit.normal) };
+						if (observedArea < 0.f)
+						{
+							continue;
+						}
 
-					break;
-				}
-				default:
-					break;
+						finalColor += materials[closestHit.materialIndex]->Shade(closestHit, dirToLight, -viewRay.direction);
+
+						break;
+					}
+					case LightMode::Combined:
+					{
+						auto const observedArea{ LightUtils::GetObservedArea(light, dirToLight, closestHit.normal) };
+
+						if (observedArea < 0.f)
+						{
+							continue;
+						}
+
+						auto const radiance{ LightUtils::GetRadiance(light, closestHit.origin) };
+						finalColor += radiance * materials[closestHit.materialIndex]->Shade(closestHit, dirToLight, -viewRay.direction) * observedArea;
+
+						break;
+					}
+					default:
+						break;
+					}
 				}
 			}
 		}
 
-		//ReinhardJolieToneMap(finalColor);
-		//ACESAproxToneMap(finalColor);
+		finalColor /= m_Samplecount;
 
 		finalColor.MaxToOne();
+		//ReinhardJolieToneMap(finalColor);
+		//ACESAproxToneMap(finalColor);
 
 		m_pBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBuffer->format,
 			static_cast<uint8_t>(finalColor.r * 255),
@@ -143,4 +149,14 @@ void Renderer::Render(Scene* pScene) const
 bool Renderer::SaveBufferToImage() const
 {
 	return SDL_SaveBMP(m_pBuffer, "RayTracing_Buffer.bmp");
+}
+
+Vector3 dae::Renderer::SampleSquare() const noexcept
+{
+	if (m_Samplecount > 1)
+	{
+		return {Utils::Random(0.f, 1.f) - .5f, Utils::Random(0.f, 1.f) - .5f, 0.f};
+	}
+
+	return { };
 }
