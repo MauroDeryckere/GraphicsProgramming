@@ -83,7 +83,7 @@ namespace dae
 		Vector3 SampleRay(uint32_t currSample) const noexcept;
 
 		Vector3 SampleRandomSquare() const noexcept;
-		Vector3 SampleUniformSquare(uint32_t currSample) const noexcept; //TODO
+		Vector3 SampleUniformSquare(uint32_t currSample) const noexcept;
 		//Vector3 SampleJitteredSquare() const noexcept; //TODO
 
 		void BoxFilter(ColorRGB& c) const noexcept;

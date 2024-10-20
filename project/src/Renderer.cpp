@@ -188,18 +188,18 @@ Vector3 dae::Renderer::SampleUniformSquare(uint32_t currSample) const noexcept
 	float const subpixelWidth{ 1.0f / gridSize };
 	float const subpixelHeight{ 1.0f / gridSize };
 
-	uint32_t sampleX = currSample % gridSize; // X index in the grid
-	uint32_t sampleY = currSample / gridSize; // Y index in th
+	uint32_t const sampleX{ currSample % gridSize };
+	uint32_t const sampleY { currSample / gridSize };
 
-	if (m_Samplecount == 2)
+	if (m_Samplecount == 2) //When there are only 2 samples, just do the samples on the center line
 	{
-		return Vector3{ (currSample * subpixelWidth) + (0.5f * subpixelWidth), 0.5f, 0.0f };
+		return Vector3{ (currSample * subpixelWidth) + (0.5f * subpixelWidth) - .5f, 0.5f, 0.0f };
 	}
 
 	return Vector3
 	{
-		(sampleX * subpixelWidth) + (0.5f * subpixelWidth),
-		(sampleY * subpixelHeight) + (0.5f * subpixelHeight),
+		(sampleX * subpixelWidth) + (0.5f * subpixelWidth) - .5f,
+		(sampleY * subpixelHeight) + (0.5f * subpixelHeight) - .5f,
 		0.0f 
 	};
 }
