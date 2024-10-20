@@ -11,14 +11,14 @@ namespace dae
 
 		constexpr ColorRGB() = default;
 		constexpr ColorRGB(float _r, float _g, float _b):
-		r{ _r }, g{_g}, b{_b} {}
+		r{ _r }, g{ _g }, b{ _b } {}
 
 		constexpr float Luminance() const
 		{
 			return 0.2126f * r + 0.7152f * g + 0.0722f * b;
 		}
 
-		void ChangeLuminance(float luminance)
+		constexpr void ChangeLuminance(float luminance)
 		{
 			float const l{ this->Luminance() };
 
@@ -32,7 +32,7 @@ namespace dae
 				*this /= maxValue;
 		}
 
-		static ColorRGB Lerp(const ColorRGB& c1, const ColorRGB& c2, float factor)
+		static const ColorRGB& Lerp(const ColorRGB& c1, const ColorRGB& c2, float factor)
 		{
 			return { Lerpf(c1.r, c2.r, factor), Lerpf(c1.g, c2.g, factor), Lerpf(c1.b, c2.b, factor) };
 		}
@@ -45,11 +45,6 @@ namespace dae
 			b += c.b;
 
 			return *this;
-		}
-
-		constexpr const ColorRGB& operator+(const ColorRGB& c)
-		{
-			return *this += c;
 		}
 
 		constexpr ColorRGB operator+(const ColorRGB& c) const
@@ -66,11 +61,6 @@ namespace dae
 			return *this;
 		}
 
-		constexpr const ColorRGB& operator-(const ColorRGB& c)
-		{
-			return *this -= c;
-		}
-
 		constexpr ColorRGB operator-(const ColorRGB& c) const
 		{
 			return { r - c.r, g - c.g, b - c.b };
@@ -83,11 +73,6 @@ namespace dae
 			b *= c.b;
 
 			return *this;
-		}
-
-		constexpr const ColorRGB& operator*(const ColorRGB& c)
-		{
-			return *this *= c;
 		}
 
 		constexpr ColorRGB operator*(const ColorRGB& c) const
@@ -103,25 +88,11 @@ namespace dae
 
 			return *this;
 		}
-
-		constexpr const ColorRGB& operator/(const ColorRGB& c)
-		{
-			return *this /= c;
-		}
-
 		constexpr ColorRGB operator/(const ColorRGB& c) const
 		{
 			return {r/c.r, g/c.g, b/c.b};
 		}
 
-		constexpr const ColorRGB& operator+=(float s)
-		{
-			r += s;
-			g += s;
-			b += s;
-
-			return *this;
-		}
 
 		constexpr const ColorRGB& operator*=(float s)
 		{
@@ -132,14 +103,18 @@ namespace dae
 			return *this;
 		}
 
-		constexpr const ColorRGB& operator*(float s)
-		{
-			return *this *= s;
-		}
-
 		constexpr ColorRGB operator*(float s) const
 		{
 			return { r * s, g * s,b * s };
+		}
+
+		constexpr const ColorRGB& operator+=(float s)
+		{
+			r += s;
+			g += s;
+			b += s;
+
+			return *this;
 		}
 
 		constexpr const ColorRGB& operator+(float s)
@@ -161,15 +136,9 @@ namespace dae
 			return *this;
 		}
 
-		constexpr const ColorRGB& operator/(float s)
+		constexpr ColorRGB operator/(float s) const
 		{
-			return *this /= s;
-		}
-
-		constexpr const ColorRGB& operator/(float s) const
-		{
-			ColorRGB c{ *this };
-			return  c /= s;
+			return { r / s, g / s, b / s };
 		}
 
 		friend ColorRGB operator*(float s, const ColorRGB& color);
