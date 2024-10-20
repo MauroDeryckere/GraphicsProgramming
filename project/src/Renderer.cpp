@@ -48,7 +48,7 @@ void Renderer::Render(Scene* pScene) const
 
 		for (uint32_t currSample{ 0 }; currSample < m_Samplecount; ++currSample)
 		{
-			auto const offset{ SampleSquare() };
+			auto const offset{ SampleRay(currSample) };
 
 			float const x{ ((2 * (px + .5f + offset.x) / static_cast<float>(m_Width) - 1) * aspectRatio * fov) };
 			float const y{ ((1 - 2 * (py + .5f + offset.y) / static_cast<float>(m_Height)) * fov) };
@@ -128,9 +128,10 @@ void Renderer::Render(Scene* pScene) const
 			}
 		}
 
-		finalColor /= m_Samplecount;
-
+		BoxFilter(finalColor);
 		finalColor.MaxToOne();
+
+		//Different forms of mapping the final colour
 		//ReinhardJolieToneMap(finalColor);
 		//ACESAproxToneMap(finalColor);
 
@@ -151,12 +152,59 @@ bool Renderer::SaveBufferToImage() const
 	return SDL_SaveBMP(m_pBuffer, "RayTracing_Buffer.bmp");
 }
 
-Vector3 dae::Renderer::SampleSquare() const noexcept
+Vector3 dae::Renderer::SampleRay(uint32_t currSample) const noexcept
 {
-	if (m_Samplecount > 1)
+	if (m_Samplecount == 1)
 	{
-		return {Utils::Random(0.f, 1.f) - .5f, Utils::Random(0.f, 1.f) - .5f, 0.f};
+		return {};
 	}
 
-	return { };
+	switch(m_CurrSampleMode)
+	{
+	case SampleMode::RandomSquare:
+		return SampleRandomSquare();
+	case SampleMode::UniformSquare:
+		return SampleUniformSquare(currSample);
+	default: 
+		return {};
+	}
+}
+
+Vector3 dae::Renderer::SampleRandomSquare() const noexcept
+{
+	return {Utils::Random(0.f, 1.f) - .5f, Utils::Random(0.f, 1.f) - .5f, 0.f};
+}
+
+Vector3 dae::Renderer::SampleUniformSquare(uint32_t currSample) const noexcept
+{
+
+	uint32_t gridSize{ static_cast<uint32_t>(std::sqrt(m_Samplecount)) };
+
+	if (gridSize * gridSize < m_Samplecount)
+	{
+		++gridSize;
+	}
+
+	float const subpixelWidth{ 1.0f / gridSize };
+	float const subpixelHeight{ 1.0f / gridSize };
+
+	uint32_t sampleX = currSample % gridSize; // X index in the grid
+	uint32_t sampleY = currSample / gridSize; // Y index in th
+
+	if (m_Samplecount == 2)
+	{
+		return Vector3{ (currSample * subpixelWidth) + (0.5f * subpixelWidth), 0.5f, 0.0f };
+	}
+
+	return Vector3
+	{
+		(sampleX * subpixelWidth) + (0.5f * subpixelWidth),
+		(sampleY * subpixelHeight) + (0.5f * subpixelHeight),
+		0.0f 
+	};
+}
+
+void dae::Renderer::BoxFilter(ColorRGB& c) const noexcept
+{
+	c /= m_Samplecount;
 }

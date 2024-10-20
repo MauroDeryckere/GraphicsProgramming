@@ -9,6 +9,7 @@ struct SDL_Surface;
 
 namespace dae
 {
+	class ColorRGB;
 	class Vector3;
 	class Scene;
 
@@ -38,14 +39,14 @@ namespace dae
 
 		void CycleSampleMode() noexcept
 		{
-			auto curr{ static_cast<uint8_t>(m_CurrLightMode) };
-			++curr %= static_cast<uint8_t>(LightMode::COUNT);
+			auto curr{ static_cast<uint8_t>(m_CurrSampleMode) };
+			++curr %= static_cast<uint8_t>(SampleMode::COUNT);
 
-			m_CurrLightMode = static_cast<LightMode>(curr);
+			m_CurrSampleMode = static_cast<SampleMode>(curr);
 		}
 
 		void IncreaseSamples() noexcept { m_Samplecount *= 2; }
-		void DecreaseSamples() noexcept { m_Samplecount = std::max(m_Samplecount / 2, 1); }
+		void DecreaseSamples() noexcept { m_Samplecount = std::max<uint32_t>(m_Samplecount / 2, 1); }
 
 	private:
 		SDL_Window* m_pWindow{};
@@ -73,12 +74,19 @@ namespace dae
 		enum class SampleMode : uint8_t
 		{
 			RandomSquare,
+			UniformSquare,
 			COUNT
 		};
 		SampleMode m_CurrSampleMode{ SampleMode::RandomSquare }; //Cycle through with F4
-		uint16_t m_Samplecount{ 1 }; //Decrease with F5, Increase with F6
+		uint32_t m_Samplecount{ 1 }; //Decrease with F5, Increase with F6
 
-		Vector3 SampleSquare() const noexcept;
-		//Vector3 UniformSquare() const noexcept; //TODO
+		Vector3 SampleRay(uint32_t currSample) const noexcept;
+
+		Vector3 SampleRandomSquare() const noexcept;
+		Vector3 SampleUniformSquare(uint32_t currSample) const noexcept; //TODO
+		//Vector3 SampleJitteredSquare() const noexcept; //TODO
+
+		void BoxFilter(ColorRGB& c) const noexcept;
+		//GaussFilter(); //TODO
 	};
 }
