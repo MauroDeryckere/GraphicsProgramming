@@ -46,7 +46,7 @@ void Renderer::Render(Scene* pScene) const
 		int const px{ idx % m_Width };
 		int const py{ idx / m_Width };
 
-		for (uint32_t currSample{ 0 }; currSample < m_Samplecount; ++currSample)
+		for (uint32_t currSample{ 0 }; currSample < m_SampleCount; ++currSample)
 		{
 			auto const offset{ SampleRay(currSample) };
 
@@ -65,7 +65,7 @@ void Renderer::Render(Scene* pScene) const
 			{
 				for (auto const& light : lights)
 				{
-					auto dirToLight{ LightUtils::GetDirectionToLight(light, closestHit.origin) };
+					auto dirToLight{ GetDirectionToLight(light, closestHit.origin) };
 					auto const distance{ dirToLight.Normalize() };
 
 					Ray const shadowRay{ closestHit.origin, dirToLight, 0.001f, distance };
@@ -79,7 +79,7 @@ void Renderer::Render(Scene* pScene) const
 					{
 					case LightMode::ObservedArea:
 					{
-						auto const observedArea{ LightUtils::GetObservedArea(light, dirToLight, closestHit.normal) };
+						auto const observedArea{ GetObservedArea(light, dirToLight, closestHit.normal) };
 						if (observedArea < 0.f)
 						{
 							continue;
@@ -90,14 +90,14 @@ void Renderer::Render(Scene* pScene) const
 					}
 					case LightMode::Radiance:
 					{
-						auto const radiance{ LightUtils::GetRadiance(light, closestHit.origin) };
+						auto const radiance{ GetRadiance(light, closestHit.origin) };
 						finalColor += radiance;
 
 						break;
 					}
 					case LightMode::BRDF:
 					{
-						auto const observedArea{ LightUtils::GetObservedArea(light, dirToLight, closestHit.normal) };
+						auto const observedArea{ GetObservedArea(light, dirToLight, closestHit.normal) };
 						if (observedArea < 0.f)
 						{
 							continue;
@@ -109,14 +109,14 @@ void Renderer::Render(Scene* pScene) const
 					}
 					case LightMode::Combined:
 					{
-						auto const observedArea{ LightUtils::GetObservedArea(light, dirToLight, closestHit.normal) };
+						auto const observedArea{ GetObservedArea(light, dirToLight, closestHit.normal) };
 
 						if (observedArea < 0.f)
 						{
 							continue;
 						}
 
-						auto const radiance{ LightUtils::GetRadiance(light, closestHit.origin) };
+						auto const radiance{ GetRadiance(light, closestHit.origin) };
 						finalColor += radiance * materials[closestHit.materialIndex]->Shade(closestHit, dirToLight, -viewRay.direction) * observedArea;
 
 						break;
@@ -154,7 +154,7 @@ bool Renderer::SaveBufferToImage() const
 
 Vector3 dae::Renderer::SampleRay(uint32_t currSample) const noexcept
 {
-	if (m_Samplecount == 1)
+	if (m_SampleCount == 1)
 	{
 		return {};
 	}
@@ -178,9 +178,9 @@ Vector3 dae::Renderer::SampleRandomSquare() const noexcept
 Vector3 dae::Renderer::SampleUniformSquare(uint32_t currSample) const noexcept
 {
 
-	uint32_t gridSize{ static_cast<uint32_t>(std::sqrt(m_Samplecount)) };
+	uint32_t gridSize{ static_cast<uint32_t>(std::sqrt(m_SampleCount)) };
 
-	if (gridSize * gridSize < m_Samplecount)
+	if (gridSize * gridSize < m_SampleCount)
 	{
 		++gridSize;
 	}
@@ -191,7 +191,7 @@ Vector3 dae::Renderer::SampleUniformSquare(uint32_t currSample) const noexcept
 	uint32_t const sampleX{ currSample % gridSize };
 	uint32_t const sampleY { currSample / gridSize };
 
-	if (m_Samplecount == 2) //When there are only 2 samples, just do the samples on the center line
+	if (m_SampleCount == 2) //When there are only 2 samples, just do the samples on the center line
 	{
 		return Vector3{ (currSample * subpixelWidth) + (0.5f * subpixelWidth) - .5f, 0.5f, 0.0f };
 	}
@@ -206,5 +206,5 @@ Vector3 dae::Renderer::SampleUniformSquare(uint32_t currSample) const noexcept
 
 void dae::Renderer::BoxFilter(ColorRGB& c) const noexcept
 {
-	c /= m_Samplecount;
+	c /= m_SampleCount;
 }

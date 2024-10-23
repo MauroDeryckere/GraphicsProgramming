@@ -45,8 +45,8 @@ namespace dae
 			m_CurrSampleMode = static_cast<SampleMode>(curr);
 		}
 
-		void IncreaseSamples() noexcept { m_Samplecount *= 2; }
-		void DecreaseSamples() noexcept { m_Samplecount = std::max<uint32_t>(m_Samplecount / 2, 1); }
+		void IncreaseSamples() noexcept { m_SampleCount *= 2; }
+		void DecreaseSamples() noexcept { m_SampleCount = std::max<uint32_t>(m_SampleCount / 2, 1); }
 
 	private:
 		SDL_Window* m_pWindow{};
@@ -78,13 +78,12 @@ namespace dae
 			COUNT
 		};
 		SampleMode m_CurrSampleMode{ SampleMode::RandomSquare }; //Cycle through with F4
-		uint32_t m_Samplecount{ 1 }; //Decrease with F5, Increase with F6
+		uint32_t m_SampleCount{ 1 }; //Decrease with F5, Increase with F6
 
 		Vector3 SampleRay(uint32_t currSample) const noexcept;
 
 		Vector3 SampleRandomSquare() const noexcept;
 		Vector3 SampleUniformSquare(uint32_t currSample) const noexcept;
-		//Vector3 SampleJitteredSquare() const noexcept; //TODO
 
 		void BoxFilter(ColorRGB& c) const noexcept;
 		//GaussFilter(); //TODO
