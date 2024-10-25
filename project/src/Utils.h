@@ -1,7 +1,9 @@
 #pragma once
 #include <iostream>
+#include <cassert>
 #include <fstream>
 #include "Maths.h"
+#include "Matrix.h"
 #include "DataTypes.h"
 
 #include <random>
@@ -9,6 +11,28 @@
 
 namespace dae
 {
+	template<typename T>
+	constexpr T Random(T min, T max) noexcept
+		requires (std::is_floating_point_v<T> || std::is_integral_v<T>)
+	{
+		if constexpr (std::is_floating_point_v<T>)
+		{
+			thread_local std::uniform_real_distribution<T> distribution(min, max);
+			thread_local std::mt19937 generator;
+
+			return distribution(generator);
+		}
+
+		else if constexpr (std::is_integral_v<T>)
+		{
+			thread_local std::uniform_int_distribution<T> distribution(min, max);
+			thread_local std::mt19937 generator;
+			return distribution(generator);
+		}
+
+		return std::numeric_limits<T>::min();
+	}
+
 	namespace GeometryUtils
 	{
 #pragma region Sphere HitTest
@@ -238,6 +262,120 @@ namespace dae
 			return HitTest_TriangleMesh(mesh, ray, temp, true);
 		}
 #pragma endregion
+
+		//Low map distortion method
+		[[nodiscard]] inline Vector3 GetRandomTriangleSample(const Light& light) noexcept
+		{
+			float r1{ Random(0.f, 1.f) };
+			float r2 { Random(0.f, 1.f) };
+
+			if (r2 > r1) 
+			{
+				r1 *= 0.5f;
+				r2 -= r1;
+			}
+			else 
+			{
+				r2 *= 0.5f;
+				r1 -= r2;
+			}
+
+			Vector3 const v0{ light.vertices[0] };
+			Vector3 const v1{ light.vertices[1] };
+			Vector3 const v2{ light.vertices[2] };
+
+			return  (1 - r1 - r2) * v0 +  r1 * v1 + r2 * v2;
+		}
+
+		//Low map distortion method
+		[[nodiscard]] inline Vector3 GetUniformTriangleSample(uint32_t totSamples, uint32_t sample, const Light& light) noexcept //TODO
+		{
+			//uint32_t n = static_cast<uint32_t>(std::sqrt(2.0f * totSamples));  // Number of rows in the grid
+
+			//uint32_t row = static_cast<uint32_t>((std::sqrt(8.0f * sample + 1.0f) - 1.0f) / 2.0f);
+			//uint32_t col = sample - row * (row + 1) / 2;
+
+
+			//float r1 = static_cast<float>(col) / static_cast<float>(n - row);  // Interpolates horizontally
+			//float r2 = static_cast<float>(row) / static_cast<float>(n);        // Interpolates vertically
+
+			//if (r2 > r1)
+			//{
+			//	r1 *= 0.5f;
+			//	r2 -= r1;
+			//}
+			//else
+			//{
+			//	r2 *= 0.5f;
+			//	r1 -= r2;
+			//}
+
+			////No vertices stored in light for now
+			////Vector3 const v0{ light.origin.x, light.origin.y, light.origin.z };
+			//Vector3 const v1{ light.origin.x + light.width, light.origin.y, light.origin.z };
+			//Vector3 const v2{ light.origin.x + light.width / 2, light.origin.y + light.height, light.origin.z };
+
+			//return  /*(1 - r1 - r2) * v0+*/  r1 * v1 + r2 * v2;
+			return {};
+		}
+
+		//Calculates the angle of a cone that starts at position worldPosition and perfectly
+		//encapsulates a sphere at position light.position with radius light.radius
+		//https://medium.com/@alexander.wester/ray-tracing-soft-shadows-in-real-time-a53b836d123b
+		[[nodiscard]] inline float CalculateConeAngle(const Light& light, const Vector3& origin) noexcept //TODO
+		{
+			//assert(light.HasSoftShadows());
+
+			//auto const dirToLight{ GetDirectionToLight(light, origin) };
+
+			////Vector Perpendicular to light
+			//Vector3 perpL{ Vector3::Cross(dirToLight.first, Vector3::UnitY) };
+
+			////Handle case where L = up -> perpL should then be (1,0,0)
+			//if (perpL == Vector3{}) 
+			//{
+			//	perpL.x = 1.0f;
+			//}
+
+			//// Use perpL to get a vector from worldPosition to the edge of the light sphere
+			//Vector3 const toLightEdge{ ((light.origin + perpL * light.radius) - origin).Normalized() };
+
+			//// Angle between L and toLightEdge. Used as the cone angle when sampling shadow rays
+			//return std::acos(Vector3::Dot(dirToLight.first, toLightEdge)) * 2.0f;
+			return {};
+		}
+
+		//Returns a ranndom direction vector inside a cone
+		//Angle is in radians
+		//https://medium.com/@alexander.wester/ray-tracing-soft-shadows-in-real-time-a53b836d123b
+		//https://miro.medium.com/v2/resize:fit:1100/format:webp/1*6NDIU1T89Z9nvb24H1WjLQ.png
+		//https://math.stackexchange.com/questions/56784/generate-a-random-direction-within-a-cone/205589#205589 
+		[[nodiscard]] inline Vector3 GetRandomConeSample(const Vector3& direction, float coneAngle) noexcept //TODO
+		{
+			//float const cosAngle{ std::cos(coneAngle) };
+
+			////float const z{ Random(cosAngle, 1.f) };
+			////float const phi{ Random(0.f, 2*PI) };
+
+			//float const z{ ((1.f - cosAngle) + cosAngle)/ 2 };
+			//float const phi{ PI };
+
+			//float const x{ std::sqrt(1.0f - z * z) * std::cos(phi) };
+			//float const y{ std::sqrt(1.0f - z * z) * std::sin(phi) };
+
+			////Find the rotation axis `u` and rotation angle `rot`
+			//Vector3 const axis{ Vector3::Cross(Vector3::UnitZ, direction).Normalized() };
+			//float const angle{ std::acos(Vector3::Dot(Vector3::UnitZ, direction)) };
+
+			////Convert rotation axis and angle to 3x3 rotation matrix
+			////auto const R{ Matrix::CreateRotation(angle, axis) };
+			//return { x, y, z };
+			////return R.TransformPoint({ x, y, z });
+			///
+			return {};
+		}
+
+		//TODO: uniform cone sampl
 	}
 
 	namespace Utils
@@ -313,27 +451,5 @@ namespace dae
 			return true;
 		}
 #pragma warning(pop)
-
-		template<typename T>
-		constexpr T Random(T min, T max) noexcept
-		requires (std::is_floating_point_v<T> || std::is_integral_v<T>)
-		{
-			if constexpr (std::is_floating_point_v<T>)
-			{
-				thread_local std::uniform_real_distribution<T> distribution(min, max);
-				thread_local std::mt19937 generator;
-
-				return distribution(generator);
-			}
-
-			else if constexpr (std::is_integral_v<T>)
-			{
-				thread_local std::uniform_int_distribution<T> distribution(min, max);
-				thread_local std::mt19937 generator;
-				return distribution(generator);
-			}
-
-			return std::numeric_limits<T>::min();
-		}
 	}
 }

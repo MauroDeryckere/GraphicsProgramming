@@ -58,6 +58,7 @@ namespace dae
 		TriangleMesh* AddTriangleMesh(TriangleCullMode cullMode, unsigned char materialIndex = 0);
 
 		Light* AddPointLight(Vector3 const& origin, float intensity, ColorRGB const& color);
+		Light* AddAreaLight(Vector3 const& origin, float intensity, ColorRGB const& color, LightShape shape = LightShape::None, float radius = 0.f, std::vector<Vector3> const& vertices = {});
 		Light* AddDirectionalLight(Vector3 const& direction, float intensity, ColorRGB const& color);
 		unsigned char AddMaterial(Material* pMaterial);
 	};
@@ -172,6 +173,20 @@ namespace dae
 		Scene_W4_BunnyScene(Scene_W4_BunnyScene&&) noexcept = delete;
 		Scene_W4_BunnyScene& operator=(const Scene_W4_BunnyScene&) = delete;
 		Scene_W4_BunnyScene& operator=(Scene_W4_BunnyScene&&) noexcept = delete;
+
+		void Initialize() override;
+	};
+
+	class Scene_Softshadows final : public Scene
+	{
+	public:
+		Scene_Softshadows() = default;
+		~Scene_Softshadows() override = default;
+
+		Scene_Softshadows(const Scene_Softshadows&) = delete;
+		Scene_Softshadows(Scene_Softshadows&&) noexcept = delete;
+		Scene_Softshadows& operator=(const Scene_Softshadows&) = delete;
+		Scene_Softshadows& operator=(Scene_Softshadows&&) noexcept = delete;
 
 		void Initialize() override;
 	};

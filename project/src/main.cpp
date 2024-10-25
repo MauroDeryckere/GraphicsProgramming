@@ -57,8 +57,10 @@ int main(int argc, char* args[])
 	//auto const pScene{ new Scene_TriangleTest{} };
 	//auto const pScene{ new Scene_W4_TestScene{} };
 
-	auto const pScene{ new Scene_W4_ReferenceScene{} };
+	//auto const pScene{ new Scene_W4_ReferenceScene{} };
 	//auto const pScene{ new Scene_W4_BunnyScene{} };
+
+	auto const pScene{ new Scene_Softshadows{} };
 
 	PrintInfo();
 

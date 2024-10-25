@@ -144,7 +144,19 @@ namespace dae
 		Matrix const rotationZ{ CreateRotationZ(r.z) };
 
 		return rotationZ * rotationY * rotationX;
+	}
 
+	Matrix Matrix::CreateRotation(float angle, const Vector3& axis)
+	{
+		auto const cosA = std::cos(angle);
+		auto const sinA = std::sin(angle);
+		return
+		{
+			{axis.x * axis.x * (1 - cosA) + cosA, axis.x * axis.y * (1 - cosA) - axis.z * sinA, axis.x * axis.z * (1 - cosA) + axis.y * sinA },
+			{axis.x * axis.y * (1 - cosA) + axis.z * sinA, axis.y * axis.y * (1 - cosA) + cosA, axis.y * axis.z * (1 - cosA) - axis.x * sinA },
+			{axis.x * axis.z * (1 - cosA) - axis.y * sinA, axis.x * axis.z * (1 - cosA) + axis.x * sinA, axis.z * axis.z * (1 - cosA) + cosA },
+			{}
+		};
 	}
 
 	Matrix Matrix::CreateRotation(float pitch, float yaw, float roll)

@@ -31,7 +31,6 @@ Renderer::Renderer(SDL_Window * pWindow) :
 void Renderer::Render(Scene* pScene) const
 {
 	Camera& camera{ pScene->GetCamera() };
-	auto const& materials{ pScene->GetMaterials() };
 	auto const& lights { pScene->GetLights() };
 
 	float const aspectRatio{ m_Width / static_cast<float>(m_Height) };
@@ -48,6 +47,7 @@ void Renderer::Render(Scene* pScene) const
 
 		for (uint32_t currSample{ 0 }; currSample < m_SampleCount; ++currSample)
 		{
+			//Offset from center of pixel depending on the current sample
 			auto const offset{ SampleRay(currSample) };
 
 			float const x{ ((2 * (px + .5f + offset.x) / static_cast<float>(m_Width) - 1) * aspectRatio * fov) };
@@ -65,65 +65,18 @@ void Renderer::Render(Scene* pScene) const
 			{
 				for (auto const& light : lights)
 				{
-					auto dirToLight{ GetDirectionToLight(light, closestHit.origin) };
-					auto const distance{ dirToLight.Normalize() };
+					//auto dirToLight{ GetDirectionToLight(light, light.origin, closestHit.origin) };
+					//if(m_ShadowsEnabled && !light.HasSoftShadows())
+					//{
+					//	Ray const shadowRay{ closestHit.origin, dirToLight.first, 0.001f, dirToLight.second };
 
-					Ray const shadowRay{ closestHit.origin, dirToLight, 0.001f, distance };
+					//	if (pScene->DoesHit(shadowRay))
+					//	{
+					//		continue;
+					//	}
+					//}
 
-					if (m_ShadowsEnabled && pScene->DoesHit(shadowRay))
-					{
-						continue;
-					}
-
-					switch (m_CurrLightMode)
-					{
-					case LightMode::ObservedArea:
-					{
-						auto const observedArea{ GetObservedArea(light, dirToLight, closestHit.normal) };
-						if (observedArea < 0.f)
-						{
-							continue;
-						}
-						finalColor += observedArea;
-
-						break;
-					}
-					case LightMode::Radiance:
-					{
-						auto const radiance{ GetRadiance(light, closestHit.origin) };
-						finalColor += radiance;
-
-						break;
-					}
-					case LightMode::BRDF:
-					{
-						auto const observedArea{ GetObservedArea(light, dirToLight, closestHit.normal) };
-						if (observedArea < 0.f)
-						{
-							continue;
-						}
-
-						finalColor += materials[closestHit.materialIndex]->Shade(closestHit, dirToLight, -viewRay.direction);
-
-						break;
-					}
-					case LightMode::Combined:
-					{
-						auto const observedArea{ GetObservedArea(light, dirToLight, closestHit.normal) };
-
-						if (observedArea < 0.f)
-						{
-							continue;
-						}
-
-						auto const radiance{ GetRadiance(light, closestHit.origin) };
-						finalColor += radiance * materials[closestHit.materialIndex]->Shade(closestHit, dirToLight, -viewRay.direction) * observedArea;
-
-						break;
-					}
-					default:
-						break;
-					}
+					finalColor += CalculateIllumination(pScene, light, closestHit, viewRay.direction);
 				}
 			}
 		}
@@ -152,18 +105,119 @@ bool Renderer::SaveBufferToImage() const
 	return SDL_SaveBMP(m_pBuffer, "RayTracing_Buffer.bmp");
 }
 
-Vector3 dae::Renderer::SampleRay(uint32_t currSample) const noexcept
+ColorRGB dae::Renderer::CalculateIllumination(Scene* pScene, const Light& light, const HitRecord& closestHit, const Vector3& viewDir) const noexcept
 {
-	if (m_SampleCount == 1)
+	uint32_t hits{ 0 };
+
+	float observedArea{ };
+	ColorRGB radiance{ };
+
+	ColorRGB shade{ };
+
+	auto const& materials{ pScene->GetMaterials() };
+
+	bool const hasSoftShadows{ !light.HasSoftShadows() };
+	if (hasSoftShadows)
 	{
-		return {};
+		auto const dirToLight{ GetDirectionToLight(light, light.origin, closestHit.origin) };
+		Ray const shadowRay{ closestHit.origin, dirToLight.first, 0.001f, dirToLight.second };
+
+		if (!m_ShadowsEnabled || !pScene->DoesHit(shadowRay))
+		{
+			auto const o{ GetObservedArea(light, dirToLight.first, closestHit.normal) };
+
+			if (o > 0.f)
+			{
+				observedArea = o;
+				radiance = GetRadiance(light, light.origin, closestHit.origin);
+				shade = materials[closestHit.materialIndex]->Shade(closestHit, dirToLight.first, -viewDir);
+			}
+		}
+	}
+	else
+	{
+		for (uint32_t sample{ 0 }; sample < m_LightSamples; ++sample)
+		{
+			switch (light.shape)
+			{
+			case LightShape::None:
+				continue;
+
+			case LightShape::Triangular:
+			{
+				auto const pointOnTriangle{ GeometryUtils::GetRandomTriangleSample(light) };
+				auto const dirToLight{ GetDirectionToLight(light, pointOnTriangle, closestHit.origin) };
+				//auto const pointOnTriangle{ GeometryUtils::GetUniformTriangleSample(50, sample, light) };
+
+				Ray const shadowRay{ closestHit.origin, dirToLight.first, 0.001f, dirToLight.second };
+
+				if (m_ShadowsEnabled && pScene->DoesHit(shadowRay))
+				{
+					++hits;
+					continue;
+				}
+
+				auto const o{ GetObservedArea(light, dirToLight.first, closestHit.normal) };
+				if (o > 0.f)
+				{
+					observedArea += o;
+
+					radiance += GetRadiance(light, pointOnTriangle, closestHit.origin);
+					shade += materials[closestHit.materialIndex]->Shade(closestHit, dirToLight.first, -viewDir);
+				}
+
+				break;
+			}
+			}
+		}
+
+		if (m_LightSamples > hits)
+		{
+			observedArea /= static_cast<float>(m_LightSamples - hits);
+			radiance /= static_cast<float>(m_LightSamples - hits);
+			shade /= static_cast<float>(m_LightSamples - hits);
+		}
 	}
 
+	float const illuminationFactor{ !m_ShadowsEnabled || hasSoftShadows ? 1.f : 1.f - (static_cast<float>(hits) / static_cast<float>(m_LightSamples)) };
+
+	switch (m_CurrLightMode)
+	{
+	case LightMode::ObservedArea:
+	{
+		return { illuminationFactor * observedArea, illuminationFactor * observedArea, illuminationFactor * observedArea };
+	}
+	case LightMode::Radiance:
+	{
+		return illuminationFactor * radiance;
+	}
+	case LightMode::BRDF:
+	{
+		return illuminationFactor * shade;
+	}
+	case LightMode::Combined:
+	{
+		return illuminationFactor * radiance * shade * observedArea;
+	}
+	default:
+		break;
+	}
+
+	return {};
+}
+
+Vector3 dae::Renderer::SampleRay(uint32_t currSample) const noexcept
+{
 	switch(m_CurrSampleMode)
 	{
 	case SampleMode::RandomSquare:
 		return SampleRandomSquare();
 	case SampleMode::UniformSquare:
+		if (m_SampleCount == 1)
+		{
+			return {};
+		}
+
 		return SampleUniformSquare(currSample);
 	default: 
 		return {};
@@ -172,7 +226,7 @@ Vector3 dae::Renderer::SampleRay(uint32_t currSample) const noexcept
 
 Vector3 dae::Renderer::SampleRandomSquare() const noexcept
 {
-	return {Utils::Random(0.f, 1.f) - .5f, Utils::Random(0.f, 1.f) - .5f, 0.f};
+	return {Random(0.f, 1.f) - .5f, Random(0.f, 1.f) - .5f, 0.f};
 }
 
 Vector3 dae::Renderer::SampleUniformSquare(uint32_t currSample) const noexcept

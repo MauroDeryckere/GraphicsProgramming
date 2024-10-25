@@ -12,6 +12,8 @@ namespace dae
 	class ColorRGB;
 	class Vector3;
 	class Scene;
+	struct Light;
+	struct HitRecord;
 
 	class Renderer final
 	{
@@ -77,8 +79,13 @@ namespace dae
 			UniformSquare,
 			COUNT
 		};
-		SampleMode m_CurrSampleMode{ SampleMode::RandomSquare }; //Cycle through with F4
-		uint32_t m_SampleCount{ 1 }; //Decrease with F5, Increase with F6
+		SampleMode m_CurrSampleMode{ SampleMode::UniformSquare }; //Cycle through with F4
+		uint32_t m_SampleCount{ 1 }; //Samples per pixel; Decrease with F5, Increase with F6
+		uint32_t m_LightSamples{ 10 }; //Samples per area light
+
+		[[nodiscard]] float CalculateIlluminationFactor(Scene* pScene, const Light& light, const Vector3& hitOrigin) const noexcept;
+
+		[[nodiscard]] ColorRGB CalculateIllumination(Scene* pScene, const Light& light, const HitRecord& closestHit, const Vector3& viewDir) const noexcept;
 
 		Vector3 SampleRay(uint32_t currSample) const noexcept;
 
