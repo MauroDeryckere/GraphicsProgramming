@@ -146,13 +146,13 @@ ColorRGB dae::Renderer::CalculateIllumination(Scene* pScene, const Light& light,
 			case LightShape::Triangular:
 			{
 				auto const pointOnTriangle{ GeometryUtils::GetRandomTriangleSample(light.vertices[0], light.vertices[1], light.vertices[2])};
-				auto const dirToLight{ GetDirectionToLight(light, pointOnTriangle, closestHit.origin) };
-				//auto const pointOnTriangle{ GeometryUtils::GetUniformTriangleSample(50, sample, light) };
+				//auto const pointOnTriangle{ GeometryUtils::GetUniformTriangleSample(light.vertices[0], light.vertices[1], light.vertices[2], m_LightSamples, sample) };
 
-				Ray const shadowRay{ closestHit.origin, dirToLight.first, 0.001f, dirToLight.second };
+				auto const dirToLight{ GetDirectionToLight(light, pointOnTriangle, closestHit.origin) };
 
 				if (m_ShadowsEnabled)
 				{
+					Ray const shadowRay{ closestHit.origin, dirToLight.first, 0.001f, dirToLight.second };
 					if (pScene->DoesHit(shadowRay))
 					{
 						++hits;

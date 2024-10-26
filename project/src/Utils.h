@@ -265,52 +265,34 @@ namespace dae
 
 		[[nodiscard]] inline Vector3 GetRandomTriangleSample(const Vector3& A, const Vector3& B, const Vector3& C) noexcept
 		{
-			// Generate two random numbers in the range [0, 1]
-			float u = static_cast<float>(std::rand()) / RAND_MAX; // Random number in [0, 1]
-			float v = static_cast<float>(std::rand()) / RAND_MAX; // Random number in [0, 1]
+			float u{ Random(0.f, 1.f) };
+			float v{ Random(0.f, 1.f) };
 
-			// If u + v > 1, we can adjust u and v to stay within the triangle
 			if (u + v > 1.0f)
 			{
 				u = 1.0f - u;
 				v = 1.0f - v;
 			}
 
-			// Calculate the random point inside the triangle using barycentric coordinates
-			Vector3 randomPoint = (1 - u - v) * A + u * B + v * C;
-
-			return randomPoint; // Return the sampled point
+			return (1 - u - v) * A + u * B + v * C;
 		}
 
-		[[nodiscard]] inline Vector3 GetUniformTriangleSample(uint32_t totSamples, uint32_t sample, const Light& light) noexcept //TODO
+		[[nodiscard]] inline Vector3 GetUniformTriangleSample(const Vector3& A, const Vector3& B, const Vector3& C, uint32_t totSamples, uint32_t sample) noexcept
 		{
-			//uint32_t n = static_cast<uint32_t>(std::sqrt(2.0f * totSamples));  // Number of rows in the grid
+			// Calculate the row and column for the grid in a square
+			uint32_t gridSize = static_cast<uint32_t>(std::sqrt(totSamples));
+			float u = (sample % gridSize) / static_cast<float>(gridSize);
+			float v = (sample / gridSize) / static_cast<float>(gridSize);
 
-			//uint32_t row = static_cast<uint32_t>((std::sqrt(8.0f * sample + 1.0f) - 1.0f) / 2.0f);
-			//uint32_t col = sample - row * (row + 1) / 2;
+			// Check if (u, v) lies outside the triangle bounds and mirror if necessary
+			if (u + v > 1.0f)
+			{
+				u = 1.0f - u;
+				v = 1.0f - v;
+			}
 
-
-			//float r1 = static_cast<float>(col) / static_cast<float>(n - row);  // Interpolates horizontally
-			//float r2 = static_cast<float>(row) / static_cast<float>(n);        // Interpolates vertically
-
-			//if (r2 > r1)
-			//{
-			//	r1 *= 0.5f;
-			//	r2 -= r1;
-			//}
-			//else
-			//{
-			//	r2 *= 0.5f;
-			//	r1 -= r2;
-			//}
-
-			////No vertices stored in light for now
-			////Vector3 const v0{ light.origin.x, light.origin.y, light.origin.z };
-			//Vector3 const v1{ light.origin.x + light.width, light.origin.y, light.origin.z };
-			//Vector3 const v2{ light.origin.x + light.width / 2, light.origin.y + light.height, light.origin.z };
-
-			//return  /*(1 - r1 - r2) * v0+*/  r1 * v1 + r2 * v2;
-			return {};
+			// Convert square sample to barycentric triangle coordinates
+			return (1.0f - u - v) * A + u * B + v * C;
 		}
 
 		//Calculates the angle of a cone that starts at position worldPosition and perfectly

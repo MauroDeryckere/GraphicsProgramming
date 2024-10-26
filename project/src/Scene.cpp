@@ -511,8 +511,8 @@ namespace dae {
 		AddSphere({ 0.f, 3.f, 0.f }, .75f, matCT_GrayMediumPlastic);
 		AddSphere({ 1.75f, 3.f, 0.f }, .75f, matCT_GraySmoothPlastic);
 
-		AddPointLight({ 0.f, 5.f, 5.f }, 20.f, { 1.f, .61f, .45f }); //Backlight
-		AddPointLight({ -2.5f, 5.f, -5.f }, 10.f, { 1.f, .80f, .45f });
+		//AddPointLight({ 0.f, 5.f, 5.f }, 20.f, { 1.f, .61f, .45f }); //Backlight
+		//AddPointLight({ -2.5f, 5.f, -5.f }, 10.f, { 1.f, .80f, .45f });
 		AddAreaLight({}, 1000.f , { .45f, 1.f, .45f }, LightShape::Triangular, 0.f, { {-1.75, 0.5f, -6.f}, { 0.f, 5.f, -5.f}, {1.75f, 0.5f, -5.f} });
 		//AddDirectionalLight(Vector3{ 1.f, -1.f, 1.f }.Normalized(), 10.f, { 1.f, 1.f, 1.f }); //Need to disable some planes to test this since they block the direction light that's infinitely far away
 	}
