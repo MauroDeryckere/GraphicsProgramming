@@ -116,16 +116,15 @@ ColorRGB dae::Renderer::CalculateIllumination(Scene* pScene, const Light& light,
 
 	auto const& materials{ pScene->GetMaterials() };
 
-	bool const hasSoftShadows{ !light.HasSoftShadows() };
-	if (hasSoftShadows)
+	bool const hasNoSoftShadows{ !light.HasSoftShadows() };
+	if (hasNoSoftShadows)
 	{
 		auto const dirToLight{ GetDirectionToLight(light, light.origin, closestHit.origin) };
 		Ray const shadowRay{ closestHit.origin, dirToLight.first, 0.001f, dirToLight.second };
 
-		if (!m_ShadowsEnabled || !pScene->DoesHit(shadowRay))
+		if (!m_ShadowsEnabled && !pScene->DoesHit(shadowRay))
 		{
 			auto const o{ GetObservedArea(light, dirToLight.first, closestHit.normal) };
-
 			if (o > 0.f)
 			{
 				observedArea = o;
@@ -179,7 +178,7 @@ ColorRGB dae::Renderer::CalculateIllumination(Scene* pScene, const Light& light,
 		}
 	}
 
-	float const illuminationFactor{ !m_ShadowsEnabled || hasSoftShadows ? 1.f : 1.f - (static_cast<float>(hits) / static_cast<float>(m_LightSamples)) };
+	float const illuminationFactor{ !m_ShadowsEnabled || hasNoSoftShadows ? 1.f : 1.f - (static_cast<float>(hits) / static_cast<float>(m_LightSamples)) };
 
 	switch (m_CurrLightMode)
 	{

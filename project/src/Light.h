@@ -28,7 +28,7 @@ namespace dae
 
 		LightType type{};
 
-		Vector3 direction{};
+		Vector3 direction{}; //this is the normal for the triangular light, for a directional light it is the direction //todo
 
 		float radius{};
 		std::vector<Vector3> vertices{};
@@ -63,7 +63,7 @@ namespace dae
 			return { dir, dis };
 		}
 		case LightType::Directional:
-			return {}; //todo
+			return { -light.direction, std::numeric_limits<float>::max() };
 		}
 
 		return {};
@@ -105,7 +105,7 @@ namespace dae
 			}
 			case LightType::Directional:
 			{
-				return {}; //todo
+				return Vector3::Dot(-light.direction, normal);
 			}
 		}
 

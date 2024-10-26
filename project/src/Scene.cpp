@@ -184,6 +184,8 @@ namespace dae {
 		l.color = color;
 		l.type = LightType::Directional;
 
+		l.vertices.shrink_to_fit();
+
 		m_Lights.emplace_back(l);
 		return &m_Lights.back();
 	}
@@ -504,6 +506,7 @@ namespace dae {
 		AddSphere({ 1.75f, 3.f, 0.f }, .75f, matCT_GraySmoothPlastic);
 
 		AddAreaLight({ 0.f, 8.f, -5.f }, 100.f , { 1.f, 1.f, 1.f }, LightShape::Triangular, 0.f, { {0.f, 8.f, -5.f}, { 1.f, 9.f, -5.f}, {2.f, 8.f, -5.f} });
+		//AddDirectionalLight(Vector3{ 1.f, -1.f, 1.f }.Normalized(), 10.f, { 1.f, 1.f, 1.f }); //Need to disable some planes to test this since they block the direction light that's infinitely far away
 	}
 
 }
