@@ -1,6 +1,7 @@
 #include "Scene.h"
 #include "Utils.h"
 #include "Material.h"
+#include "Light.h"
 
 #include <ranges>
 #include <algorithm>
@@ -171,6 +172,11 @@ namespace dae {
 			break;
 		}
 		l.vertices.shrink_to_fit();
+		auto const a{ l.vertices[1] - l.vertices[0] };
+		auto const b{ l.vertices[2] - l.vertices[0] };
+
+		auto const normal{ Vector3::Cross(a, b).Normalized() };
+		l.direction = -normal;
 
 		m_Lights.emplace_back(l);
 		return &m_Lights.back();
@@ -505,7 +511,9 @@ namespace dae {
 		AddSphere({ 0.f, 3.f, 0.f }, .75f, matCT_GrayMediumPlastic);
 		AddSphere({ 1.75f, 3.f, 0.f }, .75f, matCT_GraySmoothPlastic);
 
-		AddAreaLight({ 0.f, 8.f, -5.f }, 100.f , { 1.f, 1.f, 1.f }, LightShape::Triangular, 0.f, { {0.f, 8.f, -5.f}, { 1.f, 9.f, -5.f}, {2.f, 8.f, -5.f} });
+		AddPointLight({ 0.f, 5.f, 5.f }, 20.f, { 1.f, .61f, .45f }); //Backlight
+		AddPointLight({ -2.5f, 5.f, -5.f }, 10.f, { 1.f, .80f, .45f });
+		AddAreaLight({}, 1000.f , { .45f, 1.f, .45f }, LightShape::Triangular, 0.f, { {-1.75, 0.5f, -6.f}, { 0.f, 5.f, -5.f}, {1.75f, 0.5f, -5.f} });
 		//AddDirectionalLight(Vector3{ 1.f, -1.f, 1.f }.Normalized(), 10.f, { 1.f, 1.f, 1.f }); //Need to disable some planes to test this since they block the direction light that's infinitely far away
 	}
 

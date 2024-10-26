@@ -3,20 +3,22 @@
 
 #include "Maths.h"
 
+#include "DataTypes.h"
+
 #pragma region LIGHT
 namespace dae
 {
+	enum class LightShape : uint8_t
+	{
+		None,
+		Triangular
+	};
+
 	enum class LightType : uint8_t
 	{
 		Point,
 		Area, //Just a simple round light for now
 		Directional
-	};
-
-	enum class LightShape : uint8_t
-	{
-		None,
-		Triangular
 	};
 
 	struct Light
@@ -60,7 +62,7 @@ namespace dae
 			auto dir{ lightPoint - hitOrigin };
 			float const dis{ dir.Normalize() };
 
-			return { dir, dis };
+			return {dir , dis };
 		}
 		case LightType::Directional:
 			return { -light.direction, std::numeric_limits<float>::max() };
@@ -70,17 +72,28 @@ namespace dae
 	}
 
 	//Light point is the (sampled) point on the light or origin point of the light
-	inline ColorRGB GetRadiance(const Light& light, const Vector3& lightPoint, const Vector3& target) noexcept
+	inline ColorRGB GetRadiance(const Light& light, const Vector3& lightPoint, const HitRecord& hitRecord) noexcept
 	{
 		switch (light.type)
 		{
 			case LightType::Point:
 			{
-				return light.color * light.intensity / (Vector3::Dot(light.origin - target, light.origin - target));
+				return light.color * light.intensity / (Vector3::Dot(light.origin - hitRecord.origin, light.origin - hitRecord.origin));
 			}
 			case LightType::Area:
 			{
-				return light.color * light.intensity / (Vector3::Dot(light.origin - target, light.origin - target));
+				auto dir{ lightPoint - hitRecord.origin };
+				auto ddotn = Vector3::Dot(-light.direction, hitRecord.normal);
+
+				if (ddotn < 0.f)
+				{
+					return {};
+				}
+
+				float dSq = (lightPoint - hitRecord.origin).SqrMagnitude();
+				float G = ddotn / (dSq);
+
+				return light.color * light.intensity * G;
 			}
 			case LightType::Directional:
 			{

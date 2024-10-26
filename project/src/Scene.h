@@ -4,6 +4,7 @@
 
 #include "Maths.h"
 #include "DataTypes.h"
+#include "Light.h"
 #include "Camera.h"
 
 namespace dae
@@ -13,7 +14,6 @@ namespace dae
 	class Material;
 	struct Plane;
 	struct Sphere;
-	struct Light;
 
 	//Scene Base Class
 	class Scene

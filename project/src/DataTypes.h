@@ -2,7 +2,6 @@
 #include <vector>
 
 #include "Maths.h"
-#include "Light.h"
 
 namespace dae
 {

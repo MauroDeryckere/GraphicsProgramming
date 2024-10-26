@@ -263,31 +263,25 @@ namespace dae
 		}
 #pragma endregion
 
-		//Low map distortion method
-		[[nodiscard]] inline Vector3 GetRandomTriangleSample(const Light& light) noexcept
+		[[nodiscard]] inline Vector3 GetRandomTriangleSample(const Vector3& A, const Vector3& B, const Vector3& C) noexcept
 		{
-			float r1{ Random(0.f, 1.f) };
-			float r2 { Random(0.f, 1.f) };
+			// Generate two random numbers in the range [0, 1]
+			float u = static_cast<float>(std::rand()) / RAND_MAX; // Random number in [0, 1]
+			float v = static_cast<float>(std::rand()) / RAND_MAX; // Random number in [0, 1]
 
-			if (r2 > r1) 
+			// If u + v > 1, we can adjust u and v to stay within the triangle
+			if (u + v > 1.0f)
 			{
-				r1 *= 0.5f;
-				r2 -= r1;
-			}
-			else 
-			{
-				r2 *= 0.5f;
-				r1 -= r2;
+				u = 1.0f - u;
+				v = 1.0f - v;
 			}
 
-			Vector3 const v0{ light.vertices[0] };
-			Vector3 const v1{ light.vertices[1] };
-			Vector3 const v2{ light.vertices[2] };
+			// Calculate the random point inside the triangle using barycentric coordinates
+			Vector3 randomPoint = (1 - u - v) * A + u * B + v * C;
 
-			return  (1 - r1 - r2) * v0 +  r1 * v1 + r2 * v2;
+			return randomPoint; // Return the sampled point
 		}
 
-		//Low map distortion method
 		[[nodiscard]] inline Vector3 GetUniformTriangleSample(uint32_t totSamples, uint32_t sample, const Light& light) noexcept //TODO
 		{
 			//uint32_t n = static_cast<uint32_t>(std::sqrt(2.0f * totSamples));  // Number of rows in the grid

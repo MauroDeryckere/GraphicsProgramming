@@ -5,6 +5,7 @@
 //Project includes
 #include "Renderer.h"
 #include "Maths.h"
+#include "Light.h"
 #include "Matrix.h"
 #include "Material.h"
 #include "Scene.h"
@@ -122,13 +123,13 @@ ColorRGB dae::Renderer::CalculateIllumination(Scene* pScene, const Light& light,
 		auto const dirToLight{ GetDirectionToLight(light, light.origin, closestHit.origin) };
 		Ray const shadowRay{ closestHit.origin, dirToLight.first, 0.001f, dirToLight.second };
 
-		if (!m_ShadowsEnabled && !pScene->DoesHit(shadowRay))
+		if (!m_ShadowsEnabled || !pScene->DoesHit(shadowRay))
 		{
 			auto const o{ GetObservedArea(light, dirToLight.first, closestHit.normal) };
 			if (o > 0.f)
 			{
 				observedArea = o;
-				radiance = GetRadiance(light, light.origin, closestHit.origin);
+				radiance = GetRadiance(light, light.origin, closestHit);
 				shade = materials[closestHit.materialIndex]->Shade(closestHit, dirToLight.first, -viewDir);
 			}
 		}
@@ -144,24 +145,26 @@ ColorRGB dae::Renderer::CalculateIllumination(Scene* pScene, const Light& light,
 
 			case LightShape::Triangular:
 			{
-				auto const pointOnTriangle{ GeometryUtils::GetRandomTriangleSample(light) };
+				auto const pointOnTriangle{ GeometryUtils::GetRandomTriangleSample(light.vertices[0], light.vertices[1], light.vertices[2])};
 				auto const dirToLight{ GetDirectionToLight(light, pointOnTriangle, closestHit.origin) };
 				//auto const pointOnTriangle{ GeometryUtils::GetUniformTriangleSample(50, sample, light) };
 
 				Ray const shadowRay{ closestHit.origin, dirToLight.first, 0.001f, dirToLight.second };
 
-				if (m_ShadowsEnabled && pScene->DoesHit(shadowRay))
+				if (m_ShadowsEnabled)
 				{
-					++hits;
-					continue;
+					if (pScene->DoesHit(shadowRay))
+					{
+						++hits;
+						continue;
+					}
 				}
 
 				auto const o{ GetObservedArea(light, dirToLight.first, closestHit.normal) };
 				if (o > 0.f)
 				{
 					observedArea += o;
-
-					radiance += GetRadiance(light, pointOnTriangle, closestHit.origin);
+					radiance += GetRadiance(light, pointOnTriangle, closestHit);
 					shade += materials[closestHit.materialIndex]->Shade(closestHit, dirToLight.first, -viewDir);
 				}
 
