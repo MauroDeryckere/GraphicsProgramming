@@ -81,7 +81,7 @@ namespace dae
 		};
 		SampleMode m_CurrSampleMode{ SampleMode::UniformSquare }; //Cycle through with F4
 		uint32_t m_SampleCount{ 1 }; //Samples per pixel; Decrease with F5, Increase with F6
-		uint32_t m_LightSamples{ 10 }; //Samples per area light
+		uint32_t m_LightSamples{ 10 }; //Samples per light (if applicable)
 
 		[[nodiscard]] ColorRGB CalculateIllumination(Scene* pScene, const Light& light, const HitRecord& closestHit, const Vector3& viewDir) const noexcept;
 

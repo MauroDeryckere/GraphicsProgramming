@@ -22,7 +22,7 @@ namespace dae
 		unsigned char materialIndex{ 0 };
 	};
 
-	enum class TriangleCullMode
+	enum class TriangleCullMode : uint8_t
 	{
 		FrontFaceCulling,
 		BackFaceCulling,
@@ -75,9 +75,6 @@ namespace dae
 		std::vector<Vector3> positions{};
 		std::vector<Vector3> normals{};
 		std::vector<int> indices{};
-		unsigned char materialIndex{};
-
-		TriangleCullMode cullMode{ TriangleCullMode::BackFaceCulling };
 
 		Matrix rotationTransform{};
 		Matrix translationTransform{};
@@ -86,19 +83,27 @@ namespace dae
 		std::vector<Vector3> transformedPositions{};
 		std::vector<Vector3> transformedNormals{};
 
+		unsigned char materialIndex{};
+
+		TriangleCullMode cullMode{ TriangleCullMode::BackFaceCulling };
+		bool isDirty{ false }; //are the transforms currently 'dirty'
+
 		void Translate(const Vector3& translation)
 		{
 			translationTransform = Matrix::CreateTranslation(translation);
+			isDirty = true;
 		}
 
 		void RotateY(float yaw)
 		{
 			rotationTransform = Matrix::CreateRotationY(yaw);
+			isDirty = true;
 		}
 
 		void Scale(const Vector3& scale)
 		{
 			scaleTransform = Matrix::CreateScale(scale);
+			isDirty = true;
 		}
 
 		void AppendTriangle(const Triangle& triangle, bool ignoreTransformUpdate = false)
@@ -138,6 +143,11 @@ namespace dae
 
 		void UpdateTransforms()
 		{
+			if (!isDirty)
+			{
+				return;
+			}
+
 			//Calculate Final Transform 
 			const auto finalTransform{ translationTransform * rotationTransform * scaleTransform };
 
@@ -154,6 +164,8 @@ namespace dae
 			{
 				transformedNormals.emplace_back(finalTransform.TransformVector(n));
 			}
+
+			isDirty = false;
 		}
 	};
 #pragma endregion

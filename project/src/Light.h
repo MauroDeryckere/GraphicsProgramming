@@ -2,7 +2,6 @@
 #define LIGHT_H
 
 #include "Maths.h"
-
 #include "DataTypes.h"
 
 #pragma region LIGHT
@@ -12,6 +11,8 @@ namespace dae
 	{
 		None,
 		Triangular
+		//Rectangular TODO
+		//...
 	};
 
 	enum class LightType : uint8_t
@@ -30,7 +31,7 @@ namespace dae
 
 		LightType type{};
 
-		Vector3 direction{}; //this is the normal for the triangular light, for a directional light it is the direction //todo
+		Vector3 direction{}; //this is the normal for the triangular light, for a directional light it is the direction
 
 		float radius{};
 		std::vector<Vector3> vertices{};
@@ -104,6 +105,7 @@ namespace dae
 		return {};
 	}
 
+	//Normal is the surface normal
 	inline float GetObservedArea(const Light& light, const Vector3& dirToLight, const Vector3& normal) noexcept
 	{
 		switch (light.type)
