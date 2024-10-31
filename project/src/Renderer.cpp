@@ -15,6 +15,9 @@
 #include <corecrt_io.h>
 #include <execution>
 
+#include "SDL_egl.h"
+
+
 using namespace dae;
 
 Renderer::Renderer(SDL_Window * pWindow) :
@@ -126,12 +129,14 @@ ColorRGB dae::Renderer::CalculateIllumination(Scene* pScene, const Light& light,
 		if (!m_ShadowsEnabled || !pScene->DoesHit(shadowRay))
 		{
 			auto const o{ GetObservedArea(light, dirToLight.first, closestHit.normal) };
-			if (o > 0.f)
+			if (o <= 0.f)
 			{
-				observedArea = o;
-				radiance = GetRadiance(light, light.origin, closestHit);
-				shade = materials[closestHit.materialIndex]->Shade(closestHit, dirToLight.first, -viewDir);
+				return {};
 			}
+
+			observedArea = o;
+			radiance = GetRadiance(light, light.origin, closestHit);
+			shade = materials[closestHit.materialIndex]->Shade(closestHit, dirToLight.first, -viewDir);
 		}
 	}
 	else
@@ -175,9 +180,9 @@ ColorRGB dae::Renderer::CalculateIllumination(Scene* pScene, const Light& light,
 
 		if (m_LightSamples > hits)
 		{
-			observedArea /= static_cast<float>(m_LightSamples - hits);
-			radiance /= static_cast<float>(m_LightSamples - hits);
-			shade /= static_cast<float>(m_LightSamples - hits);
+			observedArea /= static_cast<float>(m_LightSamples);
+			radiance /= static_cast<float>(m_LightSamples);
+			shade /= static_cast<float>(m_LightSamples);
 		}
 	}
 

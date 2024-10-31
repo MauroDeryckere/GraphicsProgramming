@@ -1,7 +1,10 @@
-#pragma once
-#include <vector>
+#ifndef DATATYPES_H
+#define DATATYPES_H
 
+#include <vector>
 #include "Maths.h"
+
+#include "BVH.h"
 
 namespace dae
 {
@@ -31,6 +34,15 @@ namespace dae
 
 	struct Triangle
 	{
+		Vector3 v0{};
+		Vector3 v1{};
+		Vector3 v2{};
+
+		Vector3 normal{};
+
+		TriangleCullMode cullMode{};
+		uint8_t materialIndex{};
+
 		Triangle() = default;
 		Triangle(const Vector3& _v0, const Vector3& _v1, const Vector3& _v2, const Vector3& _normal) :
 			v0{ _v0 }, v1{ _v1 }, v2{ _v2 }, normal{ _normal.Normalized() } {}
@@ -42,39 +54,13 @@ namespace dae
 			const Vector3 edgeV0V2 = v2 - v0;
 			normal = Vector3::Cross(edgeV0V1, edgeV0V2).Normalized();
 		}
-
-		Vector3 v0{};
-		Vector3 v1{};
-		Vector3 v2{};
-
-		Vector3 normal{};
-
-		TriangleCullMode cullMode{};
-		unsigned char materialIndex{};
 	};
 
 	struct TriangleMesh
 	{
-		TriangleMesh() = default;
-		TriangleMesh(const std::vector<Vector3>& _positions, const std::vector<int>& _indices, TriangleCullMode _cullMode) :
-			positions(_positions), indices(_indices), cullMode(_cullMode)
-		{
-			//Calculate Normals
-			CalculateNormals();
-
-			//Update Transforms
-			UpdateTransforms();
-		}
-
-		TriangleMesh(const std::vector<Vector3>& _positions, const std::vector<int>& _indices, const std::vector<Vector3>& _normals, TriangleCullMode _cullMode) :
-			positions(_positions), indices(_indices), normals(_normals), cullMode(_cullMode)
-		{
-			UpdateTransforms();
-		}
-
-		std::vector<Vector3> positions{};
-		std::vector<Vector3> normals{};
-		std::vector<int> indices{};
+		std::vector<Vector3> positions{}; //vertices
+		std::vector<Vector3> normals{}; //normals (1 normal per 3 indices)
+		std::vector<int> indices{}; //indices; this contains the index in the positions array to avoid duplicate positions for shared vertices
 
 		Matrix rotationTransform{};
 		Matrix translationTransform{};
@@ -83,10 +69,31 @@ namespace dae
 		std::vector<Vector3> transformedPositions{};
 		std::vector<Vector3> transformedNormals{};
 
-		unsigned char materialIndex{};
+		std::vector<BVHNode> bvh{}; //the mesh BVH, bvh[0] == root
+ 
+		uint8_t materialIndex{};
 
 		TriangleCullMode cullMode{ TriangleCullMode::BackFaceCulling };
-		bool isDirty{ false }; //are the transforms currently 'dirty'
+		bool isDirty{ false }; //are the transforms currently 'dirty'; whe this is set, the transforms (and bvh will be updated);
+
+
+		TriangleMesh() = default;
+		TriangleMesh(const std::vector<Vector3>& _positions, const std::vector<int>& _indices, TriangleCullMode _cullMode) :
+			positions(_positions), indices(_indices), cullMode(_cullMode)
+		{
+			CalculateNormals();
+			UpdateTransforms();
+
+			//InitializeBVH();
+		}
+
+		TriangleMesh(const std::vector<Vector3>& _positions, const std::vector<int>& _indices, const std::vector<Vector3>& _normals, TriangleCullMode _cullMode) :
+			positions(_positions), indices(_indices), normals(_normals), cullMode(_cullMode)
+		{
+			UpdateTransforms();
+
+			//InitializeBVH();
+		}
 
 		void Translate(const Vector3& translation)
 		{
@@ -108,7 +115,7 @@ namespace dae
 
 		void AppendTriangle(const Triangle& triangle, bool ignoreTransformUpdate = false)
 		{
-			int startIndex = static_cast<int>(positions.size());
+			int startIndex{ static_cast<int>(positions.size()) };
 
 			positions.push_back(triangle.v0);
 			positions.push_back(triangle.v1);
@@ -119,6 +126,8 @@ namespace dae
 			indices.push_back(++startIndex);
 
 			normals.push_back(triangle.normal);
+
+			isDirty = true;
 
 			//Not ideal, but making sure all vertices are updated
 			if (!ignoreTransformUpdate)
@@ -141,9 +150,9 @@ namespace dae
 			}
 		}
 
-		void UpdateTransforms()
+		void UpdateTransforms(bool forceUpdate = false)
 		{
-			if (!isDirty)
+			if (!forceUpdate && !isDirty)
 			{
 				return;
 			}
@@ -167,6 +176,14 @@ namespace dae
 
 			isDirty = false;
 		}
+
+		void InitializeBVH()
+		{
+			bvh.emplace_back(BVHNode{  });
+			bvh.reserve(1000); //temporarily just reserve 16 child nodes (and 1 root node)
+
+			bvh[0].BuildBVH(bvh, indices, positions, normals, transformedNormals);
+		}
 	};
 #pragma endregion
 
@@ -187,7 +204,9 @@ namespace dae
 		float t = FLT_MAX;
 
 		bool didHit{ false };
-		unsigned char materialIndex{ 0 };
+		uint8_t materialIndex{ 0 };
 	};
 #pragma endregion
 }
+
+#endif

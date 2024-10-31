@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+
 namespace dae
 {
 	struct Vector4;
@@ -43,6 +45,23 @@ namespace dae
 		float& operator[](int index);
 		float operator[](int index) const;
 		bool operator==(const Vector3& v) const;
+
+		static Vector3 Max(const Vector3& v1, const Vector3& v2)
+		{
+			return {
+				std::max(v1.x, v2.x),
+				std::max(v1.y, v2.y),
+				std::max(v1.z, v2.z)
+			};
+		}
+		static Vector3 Min(const Vector3& v1, const Vector3& v2)
+		{
+			return {
+				std::min(v1.x, v2.x),
+				std::min(v1.y, v2.y),
+				std::min(v1.z, v2.z)
+			};
+		}
 
 		static const Vector3 UnitX;
 		static const Vector3 UnitY;

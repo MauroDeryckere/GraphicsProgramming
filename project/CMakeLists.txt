@@ -10,7 +10,7 @@ set(SOURCES
 )
 
 # Create the executable
-add_executable(${PROJECT_NAME} ${SOURCES} "src/Light.h")
+add_executable(${PROJECT_NAME} ${SOURCES} "src/Light.h" "src/BVH.h")
 
 # only needed if header files are not in same directory as source files
 # target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

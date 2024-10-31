@@ -9,6 +9,9 @@
 #include <random>
 #include <limits>
 
+//#include "SDL_egl.h"
+
+
 namespace dae
 {
 	template<typename T>
@@ -263,6 +266,85 @@ namespace dae
 		}
 #pragma endregion
 
+#pragma region BVH HitTest
+		inline bool IntersectAABB(const Ray& ray, const Vector3& bmin, const Vector3& bmax)
+		{
+			float tx1 = (bmin.x - ray.origin.x) / ray.direction.x;
+			float tx2 = (bmax.x - ray.origin.x) / ray.direction.x;
+
+			float tmin = std::min(tx1, tx2);
+			float tmax = std::max(tx1, tx2);
+
+			float ty1 = (bmin.y - ray.origin.y) / ray.direction.y;
+			float ty2 = (bmax.y - ray.origin.y) / ray.direction.y;
+
+			tmin = std::max(tmin, std::min(ty1, ty2));
+			tmax = std::min(tmax, std::max(ty1, ty2));
+
+			float tz1 = (bmin.z - ray.origin.z) / ray.direction.z;
+			float tz2 = (bmax.z - ray.origin.z) / ray.direction.z;
+
+			tmin = std::max(tmin, std::min(tz1, tz2));
+			tmax = std::min(tmax, std::max(tz1, tz2));
+
+			return tmax >= tmin && tmin < ray.max && tmax > 0;
+		}
+
+		inline bool HitTest_BVH(const Ray& ray, const TriangleMesh& mesh, const std::vector<BVHNode>& bvh, uint32_t nodeIdx, HitRecord& hitRecord, bool ignoreHitRecord = false)
+		{
+			const BVHNode& node{ bvh[nodeIdx] };
+			if (!IntersectAABB(ray, node.aabbMin, node.aabbMax)) 
+				return false;
+
+			if (node.IsLeaf())
+			{
+				HitRecord closestHitRecord{ };
+
+				for (uint32_t i{ 0 }; i < node.triangleCount; ++i)
+				{
+					Triangle t{ mesh.transformedPositions[mesh.indices[(node.leftFirst + i) * 3]],
+								mesh.transformedPositions[mesh.indices[((node.leftFirst + i) *3) + 1]],
+								mesh.transformedPositions[mesh.indices[((node.leftFirst + i) *3) + 2]],
+								mesh.transformedNormals[(node.leftFirst + i)]
+					};
+
+
+					t.cullMode = mesh.cullMode;
+					t.materialIndex = mesh.materialIndex;
+
+					HitRecord temp{  };
+					if (HitTest_Triangle(t, ray, temp, ignoreHitRecord))
+					{
+						if (temp.t < closestHitRecord.t)
+						{
+							closestHitRecord = temp;
+						}
+					}
+				}
+
+				if (!ignoreHitRecord) hitRecord = closestHitRecord;
+				return closestHitRecord.didHit;
+			}
+
+			if (HitTest_BVH(ray, mesh, bvh, node.leftFirst, hitRecord, ignoreHitRecord))
+			{
+				return true;
+			}
+			if (HitTest_BVH(ray, mesh, bvh, node.leftFirst + 1, hitRecord, ignoreHitRecord))
+			{
+				return true;
+			}
+
+			return false;
+		}
+
+		inline bool HitTest_BVH(const Ray& ray, const TriangleMesh& mesh, const std::vector<BVHNode>& bvh, uint32_t nodeIdx)
+		{
+			HitRecord temp{  };
+			return HitTest_BVH(ray, mesh, bvh, nodeIdx, temp, true);
+		}
+#pragma endregion
+
 		[[nodiscard]] inline Vector3 GetRandomTriangleSample(const Vector3& A, const Vector3& B, const Vector3& C) noexcept
 		{
 			float u{ Random(0.f, 1.f) };
@@ -294,64 +376,6 @@ namespace dae
 			// Convert square sample to barycentric triangle coordinates
 			return (1.0f - u - v) * A + u * B + v * C;
 		}
-
-		//Calculates the angle of a cone that starts at position worldPosition and perfectly
-		//encapsulates a sphere at position light.position with radius light.radius
-		//https://medium.com/@alexander.wester/ray-tracing-soft-shadows-in-real-time-a53b836d123b
-		[[nodiscard]] inline float CalculateConeAngle(const Light& light, const Vector3& origin) noexcept //TODO
-		{
-			//assert(light.HasSoftShadows());
-
-			//auto const dirToLight{ GetDirectionToLight(light, origin) };
-
-			////Vector Perpendicular to light
-			//Vector3 perpL{ Vector3::Cross(dirToLight.first, Vector3::UnitY) };
-
-			////Handle case where L = up -> perpL should then be (1,0,0)
-			//if (perpL == Vector3{}) 
-			//{
-			//	perpL.x = 1.0f;
-			//}
-
-			//// Use perpL to get a vector from worldPosition to the edge of the light sphere
-			//Vector3 const toLightEdge{ ((light.origin + perpL * light.radius) - origin).Normalized() };
-
-			//// Angle between L and toLightEdge. Used as the cone angle when sampling shadow rays
-			//return std::acos(Vector3::Dot(dirToLight.first, toLightEdge)) * 2.0f;
-			return {};
-		}
-
-		//Returns a ranndom direction vector inside a cone
-		//Angle is in radians
-		//https://medium.com/@alexander.wester/ray-tracing-soft-shadows-in-real-time-a53b836d123b
-		//https://miro.medium.com/v2/resize:fit:1100/format:webp/1*6NDIU1T89Z9nvb24H1WjLQ.png
-		//https://math.stackexchange.com/questions/56784/generate-a-random-direction-within-a-cone/205589#205589 
-		[[nodiscard]] inline Vector3 GetRandomConeSample(const Vector3& direction, float coneAngle) noexcept //TODO
-		{
-			//float const cosAngle{ std::cos(coneAngle) };
-
-			////float const z{ Random(cosAngle, 1.f) };
-			////float const phi{ Random(0.f, 2*PI) };
-
-			//float const z{ ((1.f - cosAngle) + cosAngle)/ 2 };
-			//float const phi{ PI };
-
-			//float const x{ std::sqrt(1.0f - z * z) * std::cos(phi) };
-			//float const y{ std::sqrt(1.0f - z * z) * std::sin(phi) };
-
-			////Find the rotation axis `u` and rotation angle `rot`
-			//Vector3 const axis{ Vector3::Cross(Vector3::UnitZ, direction).Normalized() };
-			//float const angle{ std::acos(Vector3::Dot(Vector3::UnitZ, direction)) };
-
-			////Convert rotation axis and angle to 3x3 rotation matrix
-			////auto const R{ Matrix::CreateRotation(angle, axis) };
-			//return { x, y, z };
-			////return R.TransformPoint({ x, y, z });
-			///
-			return {};
-		}
-
-		//TODO: uniform cone sampl
 	}
 
 	namespace Utils

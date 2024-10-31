@@ -2,6 +2,8 @@
 #include "Utils.h"
 #include "Material.h"
 #include "Light.h"
+#include "BVH.h"
+#include "DataTypes.h"
 
 #include <ranges>
 #include <algorithm>
@@ -60,10 +62,22 @@ namespace dae {
 			}
 		}
 
-		for (auto const& mesh : m_TriangleMeshGeometries)
+		//for (auto const& mesh : m_TriangleMeshGeometries)
+		//{
+			//HitRecord temp{ };
+			//if (GeometryUtils::HitTest_TriangleMesh(mesh, ray, temp))
+			//{
+			//	if (temp.t < closestHitRecord.t)
+			//	{
+			//		closestHitRecord = temp;
+			//	}
+			//}
+		//}
+
+		for (const auto& mesh : m_TriangleMeshGeometries)
 		{
 			HitRecord temp{ };
-			if (GeometryUtils::HitTest_TriangleMesh(mesh, ray, temp))
+			if (GeometryUtils::HitTest_BVH(ray, mesh, mesh.bvh, 0, temp))
 			{
 				if (temp.t < closestHitRecord.t)
 				{
@@ -93,9 +107,17 @@ namespace dae {
 			}
 		}
 
-		for (auto const& mesh : m_TriangleMeshGeometries)
+		//for (auto const& mesh : m_TriangleMeshGeometries)
+		//{
+		//	if (GeometryUtils::HitTest_TriangleMesh(mesh, ray))
+		//	{
+		//		return true;
+		//	}
+		//}
+
+		for (const auto& mesh : m_TriangleMeshGeometries)
 		{
-			if (GeometryUtils::HitTest_TriangleMesh(mesh, ray))
+			if (GeometryUtils::HitTest_BVH(ray, mesh, mesh.bvh, 0))
 			{
 				return true;
 			}
@@ -465,16 +487,36 @@ namespace dae {
 		AddPlane({ 5.f, 0.f, 0.f }, { -1.f, 0.f, 0.f }, matLambert_GrayBlue);
 		AddPlane({ -5.f, 0.f, 0.f }, { 1.f, 0.f, 0.f }, matLambert_GrayBlue);
 
+		//Smallest possible tests for the BVH
+		//Triangle const baseTriangle{ {-.75f, 5.5f, 0.f}, {.75f, 4.5f, 0.f }, {-.75f, 4.5f, 0.f} };
+		//auto m{ AddTriangleMesh(TriangleCullMode::NoCulling, matLambert_White) };
+		//m->AppendTriangle(baseTriangle, true);
+		//m->UpdateTransforms(true);
+		//m->InitializeBVH();
+
+		//Triangle const baseTriangle{ {-.75f, 5.5f, 0.f}, {.75f, 4.5f, 0.f }, {-.75f, 4.5f, 0.f} };
+		//Triangle const baseTriangle2{ {-.75f, 3.5f, 0.f}, {.75f, 2.5f, 0.f }, {-.75f, 2.5f, 0.f} };
+		//Triangle const baseTriangle3{ {-.75f, 1.5f, 0.f}, {.75f, .5f, 0.f }, {-.75f, .5f, 0.f} };
+		//auto m{ AddTriangleMesh(TriangleCullMode::NoCulling, matLambert_White) };
+		//m->AppendTriangle(baseTriangle, true);
+		//m->AppendTriangle(baseTriangle2, true);
+		//m->AppendTriangle(baseTriangle3, true);
+		//m->UpdateTransforms(true);
+		//m->InitializeBVH();
+
 		auto pMesh = AddTriangleMesh(TriangleCullMode::BackFaceCulling, matLambert_White);
 		Utils::ParseOBJ("resources/lowpoly_bunny.obj",
+		//Utils::ParseOBJ("resources/simple_cube.obj",
 			pMesh->positions,
 			pMesh->normals,
 			pMesh->indices);
 
-		pMesh->Scale({ 2.f, 2.f, 2.f });
-		pMesh->RotateY(TO_RADIANS * 180.f);
+		pMesh->CalculateNormals();
+		pMesh->UpdateTransforms(true);
+		pMesh->InitializeBVH();
 
-		pMesh->UpdateTransforms();
+		//pMesh->Scale({ 2.f, 2.f, 2.f });
+		//pMesh->RotateY(TO_RADIANS * 180.f);
 
 		AddPointLight({ 0.f, 5.f, 5.f }, 50.f, { 1.f, .61f, .45f });
 		AddPointLight({ -2.5f, 5.f, -5.f }, 70.f, { 1.f, .80f, .45f });
