@@ -38,7 +38,7 @@ void Renderer::Render(Scene* pScene) const
 	auto const& lights { pScene->GetLights() };
 
 	float const aspectRatio{ m_Width / static_cast<float>(m_Height) };
-	float const fov{ tan(camera.fovAngle * TO_RADIANS/2) }; //TODO -calculate only when updating
+	float const fov{ tan(camera.fovAngle * TO_RADIANS/2) };
 
 	Matrix const cameraToWorld{ camera.CalculateCameraToWorld() };
 	
@@ -69,17 +69,6 @@ void Renderer::Render(Scene* pScene) const
 			{
 				for (auto const& light : lights)
 				{
-					//auto dirToLight{ GetDirectionToLight(light, light.origin, closestHit.origin) };
-					//if(m_ShadowsEnabled && !light.HasSoftShadows())
-					//{
-					//	Ray const shadowRay{ closestHit.origin, dirToLight.first, 0.001f, dirToLight.second };
-
-					//	if (pScene->DoesHit(shadowRay))
-					//	{
-					//		continue;
-					//	}
-					//}
-
 					finalColor += CalculateIllumination(pScene, light, closestHit, viewRay.direction);
 				}
 			}

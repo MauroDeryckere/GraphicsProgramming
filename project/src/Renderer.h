@@ -91,6 +91,5 @@ namespace dae
 		Vector3 SampleUniformSquare(uint32_t currSample) const noexcept;
 
 		void BoxFilter(ColorRGB& c) const noexcept;
-		//GaussFilter(); //TODO
 	};
 }

@@ -98,6 +98,8 @@ namespace dae
 
 	bool Scene::DoesHit(const Ray& ray) const
 	{
+		constexpr bool useBVH{ false };
+
 		for (auto const& sphere : m_SphereGeometries)
 		{
 			if (GeometryUtils::HitTest_Sphere(sphere, ray))
@@ -114,21 +116,28 @@ namespace dae
 			}
 		}
 
-		for (auto const& mesh : m_TriangleMeshGeometries)
+
+		if (useBVH)
 		{
-			if (GeometryUtils::HitTest_TriangleMesh(mesh, ray))
+			for (const auto& mesh : m_TriangleMeshGeometries)
 			{
-				return true;
+				if (GeometryUtils::HitTest_BVH(ray, mesh, mesh.bvh, 0))
+				{
+					return true;
+				}
+			}
+		}
+		else
+		{
+			for (auto const& mesh : m_TriangleMeshGeometries)
+			{
+				if (GeometryUtils::HitTest_TriangleMesh(mesh, ray))
+				{
+					return true;
+				}
 			}
 		}
 
-		//for (const auto& mesh : m_TriangleMeshGeometries)
-		//{
-		//	if (GeometryUtils::HitTest_BVH(ray, mesh, mesh.bvh, 0))
-		//	{
-		//		return true;
-		//	}
-		//}
 
 		return false;
 	}
@@ -518,12 +527,15 @@ namespace dae
 			pMesh->normals,
 			pMesh->indices);
 
-		pMesh->CalculateNormals();
+		//pMesh->CalculateNormals();
+
+		pMesh->Scale({ 2.f, 2.f, 2.f });
+		pMesh->RotateY(TO_RADIANS * 180.f);
+
+		pMesh->UpdateAABB();
 		pMesh->UpdateTransforms(true);
 		pMesh->InitializeBVH();
 
-		//pMesh->Scale({ 2.f, 2.f, 2.f });
-		//pMesh->RotateY(TO_RADIANS * 180.f);
 
 		AddPointLight({ 0.f, 5.f, 5.f }, 50.f, { 1.f, .61f, .45f });
 		AddPointLight({ -2.5f, 5.f, -5.f }, 70.f, { 1.f, .80f, .45f });

@@ -228,8 +228,36 @@ namespace dae
 		}
 #pragma endregion
 #pragma region TriangeMesh HitTest
+		inline bool SlabTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray)
+		{
+			float const tx1{ (mesh.transformedMinAABB.x - ray.origin.x) / ray.direction.x };
+			float const tx2{ (mesh.transformedMaxAABB.x - ray.origin.x) / ray.direction.x };
+
+			float tmin{ std::min(tx1, tx2) };
+			float tmax{ std::max(tx1, tx2) };
+
+			float const ty1{ (mesh.transformedMinAABB.y - ray.origin.y) / ray.direction.y };
+			float const ty2{ (mesh.transformedMaxAABB.y - ray.origin.y) / ray.direction.y };
+
+			tmin = std::min(tmin, std::min(ty1, ty2));
+			tmax = std::max(tmax, std::max(ty1, ty2));
+
+			float const tz1{ (mesh.transformedMinAABB.z - ray.origin.z) / ray.direction.z };
+			float const tz2{ (mesh.transformedMaxAABB.z - ray.origin.z) / ray.direction.z };
+
+			tmin = std::min(tmin, std::min(tz1, tz2));
+			tmax = std::max(tmax, std::max(tz1, tz2));
+
+			return tmax > 0 && tmax >= tmin;
+		}
+
 		inline bool HitTest_TriangleMesh(const TriangleMesh& mesh, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
+			if (!SlabTest_TriangleMesh(mesh, ray))
+			{
+				return false;
+			}
+
 			HitRecord closestHitRecord{ };
 
 			for (uint32_t i{ 0 }; i < mesh.indices.size(); i += 3) //Every 3 indices == a triangle

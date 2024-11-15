@@ -66,8 +66,14 @@ namespace dae
 		Matrix translationTransform{};
 		Matrix scaleTransform{};
 
+		Vector3 minAABB{};
+		Vector3 maxAABB{};
+
 		std::vector<Vector3> transformedPositions{};
 		std::vector<Vector3> transformedNormals{};
+
+		Vector3 transformedMinAABB{};
+		Vector3 transformedMaxAABB{};
 
 		std::vector<BVHNode> bvh{}; //the mesh BVH, bvh[0] == root
  
@@ -76,7 +82,6 @@ namespace dae
 		TriangleCullMode cullMode{ TriangleCullMode::BackFaceCulling };
 		bool isDirty{ false }; //are the transforms currently 'dirty'; whe this is set, the transforms (and bvh will be updated);
 
-
 		TriangleMesh() = default;
 		TriangleMesh(const std::vector<Vector3>& _positions, const std::vector<int>& _indices, TriangleCullMode _cullMode) :
 			positions(_positions), indices(_indices), cullMode(_cullMode)
@@ -84,6 +89,7 @@ namespace dae
 			CalculateNormals();
 			UpdateTransforms();
 
+			UpdateAABB();
 			//InitializeBVH();
 		}
 
@@ -91,6 +97,7 @@ namespace dae
 			positions(_positions), indices(_indices), normals(_normals), cullMode(_cullMode)
 		{
 			UpdateTransforms();
+			UpdateAABB();
 
 			//InitializeBVH();
 		}
@@ -174,7 +181,61 @@ namespace dae
 				transformedNormals.emplace_back(finalTransform.TransformVector(n));
 			}
 
+			UpdateTransformedAABB(finalTransform);
+
 			isDirty = false;
+		}
+
+		void UpdateAABB()
+		{
+			if(positions.size() > 0)
+			{
+				minAABB = positions[0];
+				maxAABB = positions[0];
+
+				for(auto const& p : positions)
+				{
+					minAABB = Vector3::Min(p, minAABB);
+					maxAABB = Vector3::Max(p, maxAABB);
+				}
+			}
+		}
+
+		void UpdateTransformedAABB(const Matrix& finalTransform) noexcept
+		{
+			Vector3 tMinAABB{ finalTransform.TransformPoint(minAABB) };
+			Vector3 tMaxAABB{ tMinAABB };
+
+			Vector3 tAABB{ finalTransform.TransformPoint(maxAABB.x, minAABB.y, minAABB.z) };
+			tMinAABB = Vector3::Min(tAABB, tMinAABB);
+			tMaxAABB = Vector3::Max(tAABB, tMaxAABB);
+
+			tAABB = finalTransform.TransformPoint(maxAABB.x, minAABB.y, maxAABB.z);
+			tMinAABB = Vector3::Min(tAABB, tMinAABB);
+			tMaxAABB = Vector3::Max(tAABB, tMaxAABB);
+
+			tAABB = finalTransform.TransformPoint(minAABB.x, minAABB.y, maxAABB.z);
+			tMinAABB = Vector3::Min(tAABB, tMinAABB);
+			tMaxAABB = Vector3::Max(tAABB, tMaxAABB);
+
+			tAABB = finalTransform.TransformPoint(minAABB.x, maxAABB.y, minAABB.z);
+			tMinAABB = Vector3::Min(tAABB, tMinAABB);
+			tMaxAABB = Vector3::Max(tAABB, tMaxAABB);
+
+			tAABB = finalTransform.TransformPoint(maxAABB.x, maxAABB.y, minAABB.z);
+			tMinAABB = Vector3::Min(tAABB, tMinAABB);
+			tMaxAABB = Vector3::Max(tAABB, tMaxAABB);
+
+			tAABB = finalTransform.TransformPoint(maxAABB);
+			tMinAABB = Vector3::Min(tAABB, tMinAABB);
+			tMaxAABB = Vector3::Max(tAABB, tMaxAABB);
+
+			tAABB = finalTransform.TransformPoint(minAABB.x, maxAABB.y, maxAABB.z);
+			tMinAABB = Vector3::Min(tAABB, tMinAABB);
+			tMaxAABB = Vector3::Max(tAABB, tMaxAABB);
+
+			transformedMinAABB = tMinAABB;
+			transformedMaxAABB = tMaxAABB;
 		}
 
 		void InitializeBVH()
