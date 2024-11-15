@@ -458,16 +458,19 @@ namespace dae
 		auto m{ AddTriangleMesh(TriangleCullMode::BackFaceCulling, matLambert_White) };
 		m->AppendTriangle(baseTriangle, true);
 		m->Translate({ -1.75f, 4.5f, 0.f });
+		m->UpdateAABB();
 		m->UpdateTransforms();
 
 		m = AddTriangleMesh(TriangleCullMode::FrontFaceCulling, matLambert_White);
 		m->AppendTriangle(baseTriangle, true);
 		m->Translate({ 0.f, 4.5f, 0.f });
+		m->UpdateAABB();
 		m->UpdateTransforms();
 
 		m = AddTriangleMesh(TriangleCullMode::NoCulling, matLambert_White);
 		m->AppendTriangle(baseTriangle, true);
 		m->Translate({ 1.75f, 4.5f, 0.f });
+		m->UpdateAABB();
 		m->UpdateTransforms();
 
 		//Lights
