@@ -10,8 +10,8 @@
 
 #include "SDL_egl.h"
 
-namespace dae {
-
+namespace dae
+{
 #pragma region Base Scene
 	//Initialize Scene with Default Solid Color Material (RED)
 	Scene::Scene() :
@@ -36,6 +36,8 @@ namespace dae {
 
 	void dae::Scene::GetClosestHit(const Ray& ray, HitRecord& closestHit) const
 	{
+		constexpr bool useBVH{ false };
+
 		HitRecord closestHitRecord{ };
 
 		for(auto const& sphere : m_SphereGeometries)
@@ -62,26 +64,31 @@ namespace dae {
 			}
 		}
 
-		//for (auto const& mesh : m_TriangleMeshGeometries)
-		//{
-			//HitRecord temp{ };
-			//if (GeometryUtils::HitTest_TriangleMesh(mesh, ray, temp))
-			//{
-			//	if (temp.t < closestHitRecord.t)
-			//	{
-			//		closestHitRecord = temp;
-			//	}
-			//}
-		//}
-
-		for (const auto& mesh : m_TriangleMeshGeometries)
+		if (useBVH)
 		{
-			HitRecord temp{ };
-			if (GeometryUtils::HitTest_BVH(ray, mesh, mesh.bvh, 0, temp))
+			for (const auto& mesh : m_TriangleMeshGeometries)
 			{
-				if (temp.t < closestHitRecord.t)
+				HitRecord temp{ };
+				if (GeometryUtils::HitTest_BVH(ray, mesh, mesh.bvh, 0, temp))
 				{
-					closestHitRecord = temp;
+					if (temp.t < closestHitRecord.t)
+					{
+						closestHitRecord = temp;
+					}
+				}
+			}
+		}
+		else
+		{
+			for (auto const& mesh : m_TriangleMeshGeometries)
+			{
+				HitRecord temp{ };
+				if (GeometryUtils::HitTest_TriangleMesh(mesh, ray, temp))
+				{
+					if (temp.t < closestHitRecord.t)
+					{
+						closestHitRecord = temp;
+					}
 				}
 			}
 		}
@@ -107,21 +114,21 @@ namespace dae {
 			}
 		}
 
-		//for (auto const& mesh : m_TriangleMeshGeometries)
-		//{
-		//	if (GeometryUtils::HitTest_TriangleMesh(mesh, ray))
-		//	{
-		//		return true;
-		//	}
-		//}
-
-		for (const auto& mesh : m_TriangleMeshGeometries)
+		for (auto const& mesh : m_TriangleMeshGeometries)
 		{
-			if (GeometryUtils::HitTest_BVH(ray, mesh, mesh.bvh, 0))
+			if (GeometryUtils::HitTest_TriangleMesh(mesh, ray))
 			{
 				return true;
 			}
 		}
+
+		//for (const auto& mesh : m_TriangleMeshGeometries)
+		//{
+		//	if (GeometryUtils::HitTest_BVH(ray, mesh, mesh.bvh, 0))
+		//	{
+		//		return true;
+		//	}
+		//}
 
 		return false;
 	}

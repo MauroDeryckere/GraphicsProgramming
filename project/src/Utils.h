@@ -322,7 +322,7 @@ namespace dae
 					}
 				}
 
-				if (!ignoreHitRecord) hitRecord = closestHitRecord;
+				hitRecord = closestHitRecord;
 				return closestHitRecord.didHit;
 			}
 
